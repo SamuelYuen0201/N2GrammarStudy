@@ -1,0 +1,4199 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>日本語文法ノート・インタラクティブ学習帳 (80條核心文法)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter, Noto Sans JP, Noto Sans TC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans TC', 'Noto Sans JP', sans-serif;
+      background-color: #faf8f5;
+      background-image:
+        linear-gradient(to right, rgba(214, 211, 209, 0.22) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 211, 209, 0.22) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* Hide furigana when toggled off */
+    body.hide-furigana rt {
+      visibility: hidden;
+    }
+
+    ruby {
+      ruby-position: over;
+    }
+
+    rt {
+      font-size: 0.62em;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    /* Drag & Drop interactive states */
+    .drop-zone {
+      min-width: 6.5rem;
+      min-height: 2.25rem;
+      transition: all 0.18s ease;
+    }
+
+    .drop-zone.drag-over {
+      border-color: #4f46e5;
+      background-color: #eef2ff;
+      transform: scale(1.03);
+    }
+
+    .word-chip {
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    }
+
+    .word-chip:active {
+      transform: scale(0.96);
+    }
+
+    .word-chip.selected-chip {
+      ring: 2px solid #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.35);
+      background-color: #4f46e5;
+      color: #ffffff;
+      border-color: #4338ca;
+    }
+
+    /* 3D Flashcard Flip Styles */
+    .flashcard-scene {
+      perspective: 1200px;
+    }
+
+    .flashcard-inner {
+      position: relative;
+      width: 100%;
+      min-height: 340px;
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-style: preserve-3d;
+    }
+
+    .flashcard-inner.is-flipped {
+      transform: rotateY(180deg);
+    }
+
+    .flashcard-face {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    .flashcard-back {
+      transform: rotateY(180deg);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-800 antialiased">
+
+  <!-- ==================== STICKY HEADER ==================== -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <!-- Brand Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+          文
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+            日本語文法ノート・インタラクティブ学習帳
+          </h1>
+          <p class="text-xs text-slate-500">
+            手寫筆記 80 條核心文法 ｜ 繁體中文詳解・閃卡背誦・全覆蓋拖曳與造句測驗
+          </p>
+        </div>
+      </div>
+
+      <!-- Progress Pill & Controls -->
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <button
+          id="toggle-furigana-btn"
+          onclick="toggleFurigana()"
+          class="px-3 py-1.5 rounded-lg text-xs font-medium bg-stone-100 hover:bg-stone-200 text-slate-700 border border-stone-200 transition flex items-center gap-1.5"
+          title="切換假名標註 (Toggle Furigana)"
+        >
+          <span>ふりがな:</span>
+          <span id="furigana-status" class="font-bold text-indigo-600">ON</span>
+        </button>
+
+        <div class="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800 flex items-center gap-1.5">
+          <span>掌握進度:</span>
+          <span id="mastered-count">0</span><span>/ 80</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="max-w-6xl mx-auto px-4 sm:px-6 flex gap-1 sm:gap-2 overflow-x-auto pb-0">
+      <button
+        id="tab-study"
+        onclick="switchTab('study')"
+        class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap flex items-center gap-2"
+      >
+        <span>📖 文法ノート &amp; 詳解</span>
+        <span class="text-xs px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">80</span>
+      </button>
+      <button
+        id="tab-flash"
+        onclick="switchTab('flash')"
+        class="tab-btn px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap flex items-center gap-2"
+      >
+        <span>🃏 フラッシュカード</span>
+        <span class="text-xs px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-800">閃卡背誦</span>
+      </button>
+      <button
+        id="tab-drag"
+        onclick="switchTab('drag')"
+        class="tab-btn px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap flex items-center gap-2"
+      >
+        <span>🧩 ドラッグ穴埋め練習</span>
+        <span class="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800">80題全覆蓋</span>
+      </button>
+      <button
+        id="tab-test"
+        onclick="switchTab('test')"
+        class="tab-btn px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap flex items-center gap-2"
+      >
+        <span>🎯 文の並べ替え &amp; 理解度テスト</span>
+        <span class="text-xs px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-800">造句與辨析</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">
+
+    <!-- ==================== TAB 1: STUDY CARDS ==================== -->
+    <section id="view-study" class="space-y-5">
+      <!-- Filter & Search Bar -->
+      <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
+        <div class="relative flex-1">
+          <input
+            type="text"
+            id="study-search"
+            oninput="renderStudyCards()"
+            placeholder="搜尋文法、中文意思或關鍵字（例：あげく、かねる、ことだから、ざるをえない、だらけ、つもり…）"
+            class="w-full pl-9 pr-4 py-2 rounded-xl border border-stone-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <span class="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
+        </div>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button
+            onclick="setStudyFilter('all')"
+            id="filter-all"
+            class="filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white"
+          >
+            全部 (80)
+          </button>
+          <button
+            onclick="setStudyFilter('part1')"
+            id="filter-part1"
+            class="filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-stone-100 text-slate-700 hover:bg-stone-200"
+          >
+            1–20
+          </button>
+          <button
+            onclick="setStudyFilter('part2')"
+            id="filter-part2"
+            class="filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-stone-100 text-slate-700 hover:bg-stone-200"
+          >
+            21–40
+          </button>
+          <button
+            onclick="setStudyFilter('part3')"
+            id="filter-part3"
+            class="filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-stone-100 text-slate-700 hover:bg-stone-200"
+          >
+            41–60
+          </button>
+          <button
+            onclick="setStudyFilter('part4')"
+            id="filter-part4"
+            class="filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-stone-100 text-slate-700 hover:bg-stone-200"
+          >
+            61–80
+          </button>
+          <button
+            onclick="setStudyFilter('unmastered')"
+            id="filter-unmastered"
+            class="filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-stone-100 text-slate-700 hover:bg-stone-200"
+          >
+            未熟練
+          </button>
+          <button
+            onclick="setStudyFilter('review')"
+            id="filter-review"
+            class="filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-stone-100 text-slate-700 hover:bg-stone-200"
+          >
+            ⚠️ 錯題 (<span id="review-count">0</span>)
+          </button>
+        </div>
+      </div>
+
+      <!-- Cards Grid -->
+      <div id="study-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </section>
+
+    <!-- ==================== TAB 2: 3D FLASHCARDS ==================== -->
+    <section id="view-flash" class="hidden space-y-5">
+      <!-- Flashcard Controls -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-stone-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+            <span>🃏 フラッシュカード（互動翻轉記憶卡）</span>
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-600 mt-0.5">
+            點擊卡片（或按 <kbd class="px-1.5 py-0.5 bg-stone-100 border border-stone-300 rounded text-[11px]">Space</kbd>）翻面查看中文詳解、接續與例句。支援左右方向鍵切換。
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <select
+            id="flash-range-select"
+            onchange="initFlashcards()"
+            class="px-3 py-2 rounded-xl border border-stone-300 text-xs sm:text-sm font-medium bg-stone-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500"
+          >
+            <option value="all">範圍：全部 (1–80)</option>
+            <option value="part1">範圍：筆記 1–20</option>
+            <option value="part2">範圍：筆記 21–40</option>
+            <option value="part3">範圍：筆記 41–60</option>
+            <option value="part4">範圍：筆記 61–80</option>
+            <option value="unmastered">範圍：尚未掌握</option>
+            <option value="review">範圍：⚠️ 錯題複習</option>
+          </select>
+          <button
+            id="flash-dir-btn"
+            onclick="toggleFlashDirection()"
+            class="px-3 py-2 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-800 border border-violet-200 text-xs sm:text-sm font-semibold transition"
+          >
+            正面：日文文法 → 背面：中文
+          </button>
+          <button
+            onclick="shuffleFlashcards()"
+            class="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-slate-700 border border-stone-200 text-xs sm:text-sm font-semibold transition"
+          >
+            🔀 洗牌
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="bg-white rounded-2xl px-4 py-3 border border-stone-200 shadow-sm flex items-center justify-between gap-4">
+        <span class="text-xs sm:text-sm font-bold text-slate-700 whitespace-nowrap">
+          進度：<span id="flash-pos" class="text-violet-700">1</span> / <span id="flash-total">80</span>
+        </span>
+        <div class="flex-1 h-2.5 bg-stone-100 rounded-full overflow-hidden">
+          <div id="flash-progress-bar" class="h-full bg-gradient-to-r from-violet-600 to-indigo-600 transition-all duration-300" style="width: 1.25%"></div>
+        </div>
+        <span id="flash-status-badge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-stone-100 text-slate-600 whitespace-nowrap">
+          學習中
+        </span>
+      </div>
+
+      <!-- 3D Flip Card Container -->
+      <div id="flashcard-wrapper" class="max-w-2xl mx-auto w-full flashcard-scene">
+        <div
+          id="flashcard-inner"
+          onclick="flipFlashcard()"
+          class="flashcard-inner cursor-pointer select-none"
+        >
+          <!-- FRONT FACE -->
+          <div class="flashcard-face absolute inset-0 bg-white rounded-3xl p-6 sm:p-8 border-2 border-violet-200 shadow-md flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-2">
+              <span id="flash-front-num" class="px-3 py-1 rounded-full bg-violet-100 text-violet-800 text-xs font-bold">
+                #1
+              </span>
+              <span class="text-xs text-slate-400 font-medium">點擊卡片翻面 ↻</span>
+            </div>
+
+            <div class="my-auto text-center space-y-3 py-6">
+              <div id="flash-front-main" class="text-2xl sm:text-4xl font-bold text-slate-900 leading-snug"></div>
+              <div id="flash-front-sub" class="text-xs sm:text-sm text-slate-500"></div>
+            </div>
+
+            <div class="flex items-center justify-between pt-3 border-t border-stone-100 text-xs text-slate-500">
+              <span id="flash-front-hint">提示：點擊查看接續與例句</span>
+              <button
+                type="button"
+                onclick="event.stopPropagation(); speakFlashFront()"
+                class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 transition"
+              >
+                🔊 朗讀
+              </button>
+            </div>
+          </div>
+
+          <!-- BACK FACE -->
+          <div class="flashcard-face flashcard-back absolute inset-0 bg-gradient-to-br from-white to-violet-50/60 rounded-3xl p-6 sm:p-8 border-2 border-indigo-300 shadow-md flex flex-col justify-between overflow-y-auto">
+            <div class="flex items-center justify-between gap-2">
+              <span id="flash-back-title" class="text-sm sm:text-base font-bold text-indigo-900"></span>
+              <span class="text-xs text-indigo-400 font-medium">點擊翻回正面 ↺</span>
+            </div>
+
+            <div class="space-y-3 my-3">
+              <div>
+                <div id="flash-back-zh" class="text-base sm:text-lg font-bold text-slate-900"></div>
+                <div id="flash-back-en" class="text-xs text-slate-500"></div>
+              </div>
+
+              <div id="flash-back-conn" class="text-xs bg-indigo-50 text-indigo-900 px-3 py-2 rounded-xl border border-indigo-100"></div>
+
+              <div id="flash-back-note" class="text-xs sm:text-sm text-slate-700 bg-amber-50/80 px-3 py-2 rounded-xl border border-amber-100 leading-relaxed"></div>
+
+              <div class="bg-white rounded-xl p-3 border border-stone-200 flex items-start justify-between gap-2">
+                <div class="space-y-1">
+                  <div id="flash-back-ex-jp" class="text-sm text-slate-900 leading-relaxed"></div>
+                  <div id="flash-back-ex-zh" class="text-xs text-slate-600"></div>
+                </div>
+                <button
+                  type="button"
+                  onclick="event.stopPropagation(); speakFlashExample()"
+                  class="shrink-0 w-8 h-8 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 flex items-center justify-center text-sm"
+                  title="朗讀例句"
+                >
+                  🔊
+                </button>
+              </div>
+            </div>
+
+            <div class="text-center text-[11px] text-slate-400">
+              在下方按鈕可標記「已掌握」或「待複習」
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flashcard Bottom Navigation & Marking -->
+      <div class="max-w-2xl mx-auto w-full bg-white rounded-2xl p-4 border border-stone-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <button
+          type="button"
+          onclick="prevFlashcard()"
+          class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-slate-700 text-sm font-bold transition"
+        >
+          ← 上一張
+        </button>
+
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            id="flash-review-btn"
+            onclick="toggleFlashReview()"
+            class="px-3.5 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs sm:text-sm font-bold transition"
+          >
+            ⚠️ 標記複習
+          </button>
+          <button
+            type="button"
+            id="flash-master-btn"
+            onclick="toggleFlashMastered()"
+            class="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-sm transition"
+          >
+            ✓ 已掌握
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onclick="nextFlashcard()"
+          class="px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold shadow-sm transition"
+        >
+          下一張 →
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: DRAG & DROP FILL-IN-THE-BLANK ==================== -->
+    <section id="view-drag" class="hidden space-y-5">
+      <!-- Instructions & Range Controls -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 border border-stone-200 shadow-sm space-y-3">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+              <span>🧩 ドラッグ穴埋め練習（全 80 題不重複輪流登場）</span>
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-600 mt-1">
+              系統採用<strong>不重複發牌機制</strong>，保證所選範圍內的<strong>每一個文法例句至少出現一次</strong>！可拖曳或點擊卡片填入空格。
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select
+              id="drag-range-select"
+              onchange="resetDragDeckAndStart()"
+              class="px-3 py-2 rounded-xl border border-stone-300 text-xs sm:text-sm font-medium bg-stone-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="all">出題範圍：全部 (1–80)</option>
+              <option value="part1">出題範圍：筆記 1–20</option>
+              <option value="part2">出題範圍：筆記 21–40</option>
+              <option value="part3">出題範圍：筆記 41–60</option>
+              <option value="part4">出題範圍：筆記 61–80</option>
+            </select>
+            <button
+              onclick="dealNextDragRound()"
+              class="px-4 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs sm:text-sm font-bold border border-indigo-200 transition"
+            >
+              ➡️ 下一組 5 題
+            </button>
+          </div>
+        </div>
+
+        <!-- Full Coverage Tracker Bar -->
+        <div class="pt-2 border-t border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div class="font-semibold text-slate-700">
+            📊 本輪不重複覆蓋進度：<span id="drag-coverage-text" class="text-indigo-700 font-bold">5 / 80</span> 題已登場
+          </div>
+          <div class="flex-1 max-w-md h-2 bg-stone-100 rounded-full overflow-hidden">
+            <div id="drag-coverage-bar" class="h-full bg-indigo-600 transition-all duration-300" style="width: 6.25%"></div>
+          </div>
+          <button
+            type="button"
+            onclick="resetDragDeckAndStart()"
+            class="text-slate-500 hover:text-indigo-600 underline text-left sm:text-right"
+          >
+            重置本輪進度
+          </button>
+        </div>
+      </div>
+
+      <!-- Word Bank -->
+      <div class="bg-indigo-50/70 rounded-2xl p-4 border border-indigo-200 shadow-sm sticky top-[108px] sm:top-[104px] z-20 backdrop-blur-sm">
+        <div class="flex items-center justify-between mb-2.5">
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-800">
+            📦 文法詞庫（拖曳或點擊選擇）
+          </span>
+          <span id="drag-selection-hint" class="text-xs text-indigo-600 font-medium">
+            尚未選取卡片
+          </span>
+        </div>
+        <div id="drag-word-bank" class="flex flex-wrap gap-2.5 min-h-[44px]"></div>
+      </div>
+
+      <!-- Questions List -->
+      <div id="drag-questions-list" class="space-y-3.5"></div>
+
+      <!-- Action Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-white rounded-2xl p-4 border border-stone-200 shadow-sm">
+        <div id="drag-score-banner" class="text-sm font-semibold text-slate-600">
+          填完 5 題後，點擊右側按鈕批改！
+        </div>
+        <div class="flex items-center gap-2.5">
+          <button
+            onclick="resetDragCurrentRound()"
+            class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-slate-700 text-sm font-semibold transition"
+          >
+            清空重填
+          </button>
+          <button
+            onclick="checkDragAnswers()"
+            class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-sm transition"
+          >
+            ✅ 批改答案
+          </button>
+          <button
+            onclick="dealNextDragRound()"
+            class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold shadow-sm transition"
+          >
+            下一組 →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: SENTENCE SCRAMBLE & NUANCE QUIZ ==================== -->
+    <section id="view-test" class="hidden space-y-5">
+      <!-- Sub-mode Switcher -->
+      <div class="bg-white rounded-2xl p-2 border border-stone-200 shadow-sm inline-flex flex-wrap gap-2">
+        <button
+          id="subtab-scramble"
+          onclick="switchTestSubtab('scramble')"
+          class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 text-white transition"
+        >
+          🧱 文の並べ替え（80題句子重組）
+        </button>
+        <button
+          id="subtab-nuance"
+          onclick="switchTestSubtab('nuance')"
+          class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-stone-100 transition"
+        >
+          ⚖️ 語感辨析クイズ（40題易混淆比較）
+        </button>
+      </div>
+
+      <!-- SUB-MODE A: SENTENCE SCRAMBLE -->
+      <div id="panel-scramble" class="bg-white rounded-2xl p-5 sm:p-6 border border-stone-200 shadow-sm space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-stone-100 pb-3">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-800 text-xs font-bold">
+              第 <span id="scramble-index">1</span> / <span id="scramble-total">80</span> 題
+            </span>
+            <span id="scramble-grammar-tag" class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 text-xs font-bold">
+              重點文法
+            </span>
+            <select
+              id="scramble-range-select"
+              onchange="setScrambleRange()"
+              class="px-2.5 py-1 rounded-lg border border-stone-300 text-xs font-semibold bg-stone-50 text-slate-700"
+            >
+              <option value="all">全部 (1–80)</option>
+              <option value="part1">1–20</option>
+              <option value="part2">21–40</option>
+              <option value="part3">41–60</option>
+              <option value="part4">61–80</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              onclick="shuffleScrambleList()"
+              class="px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-xs font-semibold text-violet-700 border border-violet-200"
+              title="隨機打亂題目順序"
+            >
+              🔀 洗牌
+            </button>
+            <button
+              onclick="prevScramble()"
+              class="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-xs font-semibold text-slate-700"
+            >
+              ← 上一題
+            </button>
+            <button
+              onclick="nextScramble()"
+              class="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-xs font-semibold text-slate-700"
+            >
+              下一題 →
+            </button>
+          </div>
+        </div>
+
+        <!-- Prompt -->
+        <div class="bg-stone-50 rounded-xl p-4 border border-stone-200 space-y-1">
+          <div class="text-xs font-semibold text-slate-500">請根據中文意思，依序點擊下方詞塊排出正確的日文句子：</div>
+          <div id="scramble-zh" class="text-base sm:text-lg font-bold text-slate-900"></div>
+          <div id="scramble-en" class="text-xs sm:text-sm text-slate-500"></div>
+        </div>
+
+        <!-- Answer Drop Area -->
+        <div>
+          <div class="text-xs font-semibold text-slate-500 mb-2">你的組合（點擊詞塊可移回下方）：</div>
+          <div
+            id="scramble-answer-zone"
+            class="min-h-[60px] p-3 rounded-xl border-2 border-dashed border-indigo-300 bg-indigo-50/40 flex flex-wrap gap-2 items-center"
+          ></div>
+        </div>
+
+        <!-- Available Chunks -->
+        <div>
+          <div class="text-xs font-semibold text-slate-500 mb-2">可選詞塊：</div>
+          <div id="scramble-bank-zone" class="flex flex-wrap gap-2.5 min-h-[48px]"></div>
+        </div>
+
+        <!-- Feedback Box -->
+        <div id="scramble-feedback" class="hidden rounded-xl p-4 text-sm"></div>
+
+        <!-- Controls -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-stone-100">
+          <button
+            onclick="resetCurrentScramble()"
+            class="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-slate-700 text-sm font-semibold"
+          >
+            ↺ 重新排列
+          </button>
+          <div class="flex items-center gap-2">
+            <button
+              onclick="checkScramble()"
+              class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-sm"
+            >
+              ✅ 檢查語順
+            </button>
+            <button
+              onclick="nextScramble()"
+              class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold shadow-sm"
+            >
+              下一題 →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-MODE B: NUANCE CONTRAST QUIZ -->
+      <div id="panel-nuance" class="hidden bg-white rounded-2xl p-5 sm:p-6 border border-stone-200 shadow-sm space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-stone-100 pb-3">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800 text-xs font-bold">
+              語感辨析第 <span id="nuance-index">1</span> / <span id="nuance-total">40</span> 題
+            </span>
+            <span id="nuance-topic" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold">
+              比較主題
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              onclick="prevNuance()"
+              class="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-xs font-semibold text-slate-700"
+            >
+              ← 上一題
+            </button>
+            <button
+              onclick="nextNuance()"
+              class="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-xs font-semibold text-slate-700"
+            >
+              下一題 →
+            </button>
+          </div>
+        </div>
+
+        <!-- Question Card -->
+        <div class="bg-stone-50 rounded-xl p-5 border border-stone-200 space-y-2">
+          <div id="nuance-jp" class="text-lg sm:text-xl font-bold text-slate-900 leading-relaxed"></div>
+          <div id="nuance-zh" class="text-sm text-slate-600"></div>
+        </div>
+
+        <!-- Options Grid -->
+        <div id="nuance-options" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+
+        <!-- Explanation Box -->
+        <div id="nuance-feedback" class="hidden rounded-xl p-4 text-sm space-y-2"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast Notification -->
+  <div
+    id="toast"
+    class="fixed bottom-5 right-5 z-50 hidden px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs sm:text-sm font-medium shadow-lg transition"
+  ></div>
+
+  <!-- ==================== APPLICATION SCRIPT ==================== -->
+  <script>
+    // =========================================================================
+    // 1. COMPLETE GRAMMAR DATA (ALL 80 ITEMS FROM HANDWRITTEN NOTES)
+    // =========================================================================
+    const grammarData = [
+      {
+        id: 1,
+        pattern: '〜(の)あげく',
+        reading: '〜(の)あげく',
+        titleRuby: '〜（の）あげく',
+        meaningZh: '〜之後、結果（長時間經過後的不良或無奈結果）',
+        meaningEn: 'in the end / after a long time of... (usually negative or regrettable outcome)',
+        connection: '動詞た形 ／ 名詞＋の ＋ あげく（に）',
+        nuanceNote:
+          '強調經過長時間的糾結、爭吵、煩惱或努力後，最終卻得出一個不太理想、令人無奈的結果。',
+        examples: [
+          {
+            jp: 'さんざん<ruby>迷<rt>まよ</rt></ruby>った<strong>あげく</strong>、結局<ruby>何<rt>なに</rt></ruby>も<ruby>買<rt>か</rt></ruby>わなかった。',
+            plain: 'さんざん迷ったあげく、結局何も買わなかった。',
+            zh: '猶豫了老半天之後，結果什麼也沒買。',
+          },
+          {
+            jp: '<ruby>口論<rt>こうろん</rt></ruby>の<strong>あげく</strong>、<ruby>二人<rt>ふたり</rt></ruby>は<ruby>別<rt>わか</rt></ruby>れることになった。',
+            plain: '口論のあげく、二人は別れることになった。',
+            zh: '大吵一架的結果，兩人決定分手了。',
+          },
+        ],
+      },
+      {
+        id: 2,
+        pattern: 'あまり(に)',
+        reading: 'あまり(に)',
+        titleRuby: 'あまり（に）',
+        meaningZh: '〜太、過於（因為程度太超過而引發某種結果）',
+        meaningEn: 'so much... that... / due to excessive...',
+        connection: '動詞辞書形・た形 ／ い形・な形な ／ 名詞の ＋ あまり（に）',
+        nuanceNote:
+          '表示某種情感或狀態（如緊張、高興、擔心、忙碌）超過了正常限度，因而導致後項的失常或特殊結果。',
+        examples: [
+          {
+            jp: '<ruby>嬉<rt>うれ</rt></ruby>しさの<strong>あまり</strong>、<ruby>涙<rt>なみだ</rt></ruby>が<ruby>出<rt>で</rt></ruby>てしまった。',
+            plain: '嬉しさのあまり、涙が出てしまった。',
+            zh: '因為太過高興，眼淚不由自主地流了下來。',
+          },
+          {
+            jp: '<ruby>緊張<rt>きんちょう</rt></ruby>した<strong>あまり</strong>、言葉が<ruby>出<rt>で</rt></ruby>なかった。',
+            plain: '緊張したあまり、言葉が出なかった。',
+            zh: '因為太過緊張，一句話也說不出來。',
+          },
+        ],
+      },
+      {
+        id: 3,
+        pattern: '以上 (いじょう)',
+        reading: 'いじょう',
+        titleRuby: '<ruby>以上<rt>いじょう</rt></ruby>（は）',
+        meaningZh: '① 〜超過（數量基準）　② 既然…就…（責任、決心）',
+        meaningEn: '① more than / above ② now that... / since...',
+        connection: '① 数量詞＋以上　② 普通形（な形・名詞である）＋以上（は）',
+        nuanceNote:
+          '作為文法「〜以上（は）」時，表示「既然已經承諾、決定或處於某立場，就理所當然應該…」，後項多為義務、決心或勸告。',
+        examples: [
+          {
+            jp: '<ruby>約束<rt>やくそく</rt></ruby>した<strong><ruby>以上<rt>いじょう</rt></ruby></strong>、必ず<ruby>守<rt>まも</rt></ruby>らなければならない。',
+            plain: '約束した以上、必ず守らなければならない。',
+            zh: '既然約定好了，就一定要遵守。',
+          },
+          {
+            jp: '<ruby>試合<rt>しあい</rt></ruby>に<ruby>出<rt>で</rt></ruby>る<strong><ruby>以上<rt>いじょう</rt></ruby>は</strong>、<ruby>全力<rt>ぜんりょく</rt></ruby>を<ruby>尽<rt>つ</rt></ruby>くしたい。',
+            plain: '試合に出る以上は、全力を尽くしたい。',
+            zh: '既然要上場比賽，就想全力以赴。',
+          },
+        ],
+      },
+      {
+        id: 4,
+        pattern: '一方 (いっぽう)',
+        reading: 'いっぽう',
+        titleRuby: '<ruby>一方<rt>いっぽう</rt></ruby>（で）',
+        meaningZh: '〜一方面…（另一方面…）',
+        meaningEn: 'on the one hand..., on the other hand... / while...',
+        connection: '普通形（な形な・である ／ 名詞の・である）＋ 一方（で）',
+        nuanceNote:
+          '用於對比同一事物的兩個不同側面（如優點與缺點），或是同時進行的兩件事、兩個對象的反差。',
+        examples: [
+          {
+            jp: 'この<ruby>仕事<rt>しごと</rt></ruby>は<ruby>大変<rt>たいへん</rt></ruby>な<strong><ruby>一方<rt>いっぽう</rt></ruby>で</strong>、やりがいがある。',
+            plain: 'この仕事は大変な一方で、やりがいがある。',
+            zh: '這份工作一方面很辛苦，另一方面也很有成就感。',
+          },
+          {
+            jp: '<ruby>姉<rt>あね</rt></ruby>は<ruby>活発<rt>かっぱつ</rt></ruby>な<strong><ruby>一方<rt>いっぽう</rt></ruby></strong>、<ruby>妹<rt>いもうと</rt></ruby>はおとなしい。',
+            plain: '姉は活発な一方、妹はおとなしい。',
+            zh: '姊姊一方面很活潑，妹妹則很文靜。',
+          },
+        ],
+      },
+      {
+        id: 5,
+        pattern: '一方だ (いっぽうだ)',
+        reading: 'いっぽうだ',
+        titleRuby: '<ruby>一方<rt>いっぽう</rt></ruby>だ',
+        meaningZh: '〜不斷…、越來越…（朝單一方向持續變化）',
+        meaningEn: 'keep on... / more and more... (one-way trend)',
+        connection: '動詞辞書形（表示變化的動詞）＋ 一方だ',
+        nuanceNote:
+          '與第 4 條「一方で」不同！「動詞辞書形＋一方だ」置於句尾，表示狀況只朝某個方向一直發展（常見於減少、增加、惡化等趨勢）。',
+        examples: [
+          {
+            jp: '<ruby>最近<rt>さいきん</rt></ruby>、<ruby>物価<rt>ぶっか</rt></ruby>は<ruby>上<rt>あ</rt></ruby>がる<strong><ruby>一方<rt>いっぽう</rt></ruby>だ</strong>。',
+            plain: '最近、物価は上がる一方だ。',
+            zh: '最近物價不斷上漲。',
+          },
+          {
+            jp: '<ruby>使<rt>つか</rt></ruby>わないと、<ruby>外国語<rt>がいこくご</rt></ruby>は<ruby>忘<rt>わす</rt></ruby>れる<strong><ruby>一方<rt>いっぽう</rt></ruby>だ</strong>。',
+            plain: '使わないと、外国語は忘れる一方だ。',
+            zh: '如果不用的話，外語就會越來越忘記。',
+          },
+        ],
+      },
+      {
+        id: 6,
+        pattern: '(上) うえに',
+        reading: 'うえに',
+        titleRuby: '（<ruby>上<rt>うえ</rt></ruby>）うえに',
+        meaningZh: '〜加上、不僅…而且…（同類評價的累加）',
+        meaningEn: 'in addition to / not only... but also...',
+        connection: '普通形（な形な ／ 名詞の）＋ うえに',
+        nuanceNote:
+          '將兩個同方向的性質疊加（好上加好，或雪上加霜），後項常搭配助詞「も」。',
+        examples: [
+          {
+            jp: 'この<ruby>店<rt>みせ</rt></ruby>は<ruby>安<rt>やす</rt></ruby>い<strong>うえに</strong>、<ruby>味<rt>あじ</rt></ruby>もとてもおいしい。',
+            plain: 'この店は安いうえに、味もとてもおいしい。',
+            zh: '這家店不僅便宜，味道也非常好吃。',
+          },
+          {
+            jp: '<ruby>道<rt>みち</rt></ruby>に<ruby>迷<rt>まよ</rt></ruby>った<strong>うえに</strong>、<ruby>雨<rt>あめ</rt></ruby>まで<ruby>降<rt>ふ</rt></ruby>ってきた。',
+            plain: '道に迷ったうえに、雨まで降ってきた。',
+            zh: '不僅迷了路，甚至還下起雨來了。',
+          },
+        ],
+      },
+      {
+        id: 7,
+        pattern: '(上) うえで',
+        reading: 'うえで',
+        titleRuby: '（<ruby>上<rt>うえ</rt></ruby>）うえで',
+        meaningZh: '① 在…方面（立場/範圍）　② 在…之後（先完成準備再做）',
+        meaningEn: '① in terms of / when it comes to ② after doing... (as a basis)',
+        connection: '① 動詞辞書形・名詞の ＋ うえで　② 動詞た形・名詞の ＋ うえで',
+        nuanceNote:
+          '接「た形」表「先完成前項的確認、商量或調查，再進行後項行動」；接「辞書形/名詞の」則表「在…方面／做…的時候」。',
+        examples: [
+          {
+            jp: '<ruby>契約書<rt>けいやくしょ</rt></ruby>をよく<ruby>読<rt>よ</rt></ruby>んだ<strong>うえで</strong>、サインしてください。',
+            plain: '契約書をよく読んだうえで、サインしてください。',
+            zh: '請在仔細讀過合約書之後再簽名。',
+          },
+          {
+            jp: '<ruby>日本語<rt>にほんご</rt></ruby>を<ruby>勉強<rt>べんきょう</rt></ruby>する<strong>うえで</strong>、<ruby>毎日<rt>まいにち</rt></ruby><ruby>聞<rt>き</rt></ruby>くことが<ruby>大切<rt>たいせつ</rt></ruby>だ。',
+            plain: '日本語を勉強するうえで、毎日聞くことが大切だ。',
+            zh: '在學習日文方面，每天聽力練習是很重要的。',
+          },
+        ],
+      },
+      {
+        id: 8,
+        pattern: 'うえは',
+        reading: 'うえは',
+        titleRuby: 'うえは',
+        meaningZh: '〜既然…就…（決心、必然行動）',
+        meaningEn: 'now that... / since... (strong resolve)',
+        connection: '動詞辞書形・た形 ＋ うえは',
+        nuanceNote:
+          '語氣比「以上は」更偏書面與正式，表示「既然已經決定／事情已經如此，就只好／一定要…」。',
+        examples: [
+          {
+            jp: '<ruby>引き受<rt>ひきう</rt></ruby>けた<strong>うえは</strong>、<ruby>責任<rt>せきにん</rt></ruby>をもってやり<ruby>遂<rt>と</rt></ruby>げます。',
+            plain: '引き受けたうえは、責任をもってやり遂げます。',
+            zh: '既然接下了這件事，我就會負起責任徹底完成。',
+          },
+          {
+            jp: 'こうなった<strong>うえは</strong>、<ruby>本当<rt>ほんとう</rt></ruby>のことを<ruby>話<rt>はな</rt></ruby>すしかない。',
+            plain: 'こうなったうえは、本当のことを話すしかない。',
+            zh: '事情既然已經到了這個地步，也只能說出實話了。',
+          },
+        ],
+      },
+      {
+        id: 9,
+        pattern: 'うちに',
+        reading: 'うちに',
+        titleRuby: 'うちに',
+        meaningZh: '① 趁著（狀態還沒改變前做…）　② 在…期間（不知不覺自然變化）',
+        meaningEn: '① while... (before it changes) ② while doing... (natural change occurs)',
+        connection: '動詞辞書形・ている・ない形 ／ い形 ／ な形な ／ 名詞の ＋ うちに',
+        nuanceNote:
+          '筆記精準點出兩大用法：①「趁著…趕快做」（如：趁熱吃）；②「在持續做某事的期間，不知不覺發生自然變化」（如：看著看著就睡著了）。',
+        examples: [
+          {
+            jp: '<ruby>温<rt>あたた</rt></ruby>かい<strong>うちに</strong>、どうぞ<ruby>召<rt>め</rt></ruby>し<ruby>上<rt>あ</rt></ruby>がってください。',
+            plain: '温かいうちに、どうぞ召し上がってください。',
+            zh: '請趁熱享用。',
+          },
+          {
+            jp: '<ruby>音楽<rt>おんがく</rt></ruby>を<ruby>聞<rt>き</rt></ruby>いている<strong>うちに</strong>、<ruby>眠<rt>ねむ</rt></ruby>ってしまった。',
+            plain: '音楽を聞いているうちに、眠ってしまった。',
+            zh: '在聽音樂的期間，不知不覺就睡著了。',
+          },
+        ],
+      },
+      {
+        id: 10,
+        pattern: 'うちは',
+        reading: 'うちは',
+        titleRuby: 'うちは',
+        meaningZh: '〜在…的整個期間內（持續某種狀態或限制）',
+        meaningEn: 'as long as... / during the entire period while...',
+        connection: '動詞辞書形・ている・ない形 ／ い形 ／ な形な ／ 名詞の ＋ うちは',
+        nuanceNote:
+          '與「うちに」對比！「うちは」強調在某狀態持續的「整個期間內」都一直維持某情況（暗示一旦離開這個期間，情況就會改變）。',
+        examples: [
+          {
+            jp: '<ruby>雨<rt>あめ</rt></ruby>が<ruby>降<rt>ふ</rt></ruby>っている<strong>うちは</strong>、<ruby>外<rt>そと</rt></ruby>で<ruby>遊<rt>あそ</rt></ruby>べない。',
+            plain: '雨が降っているうちは、外で遊べない。',
+            zh: '在下雨的整個期間內，都不能在外面玩。',
+          },
+          {
+            jp: '<ruby>元気<rt>げんき</rt></ruby>な<strong>うちは</strong>、<ruby>働<rt>はたら</rt></ruby>き<ruby>続<rt>つづ</rt></ruby>けたい。',
+            plain: '元気なうちは、働き続けたい。',
+            zh: '在身體還健康的這段期間，我想繼續工作下去。',
+          },
+        ],
+      },
+      {
+        id: 11,
+        pattern: '〜ようではないか',
+        reading: '〜ようではないか',
+        titleRuby: '〜ようではないか',
+        meaningZh: '〜一起…吧！（雙重否定強調號召）',
+        meaningEn: 'let us... / why don\'t we... (strong formal call to action)',
+        connection: '動詞意向形（〜よう / 〜おう）＋ ではないか（口語：じゃないか）',
+        nuanceNote:
+          '筆記特別提醒「ない＋か＝雙重否定」！用來向大家強烈呼籲、號召一起行動，常見於演講、社論或激勵場合。',
+        examples: [
+          {
+            jp: 'みんなで<ruby>力<rt>ちから</rt></ruby>を<ruby>合<rt>あ</rt></ruby>わせて<ruby>頑張<rt>がんば</rt></ruby>ろう<strong>ではないか</strong>。',
+            plain: 'みんなで力を合わせて頑張ろうではないか。',
+            zh: '大家一起齊心協力加油吧！',
+          },
+          {
+            jp: 'もう一度、原点に<ruby>戻<rt>もど</rt></ruby>って<ruby>考<rt>かんが</rt></ruby>えてみよう<strong>ではないか</strong>。',
+            plain: 'もう一度、原点に戻って考えてみようではないか。',
+            zh: '讓我們再一次回到原點思考看看吧！',
+          },
+        ],
+      },
+      {
+        id: 12,
+        pattern: '〜得る (うる/える) / 〜得ない (えない)',
+        reading: '〜うる・〜える / 〜えない',
+        titleRuby: '〜<ruby>得<rt>う・え</rt></ruby>る / 〜<ruby>得<rt>え</rt></ruby>ない',
+        meaningZh: '〜能夠、有可能會 ／ 〜不可能（客觀可能性）',
+        meaningEn: 'can / possible to... / impossible to... (e.g. ありえない)',
+        connection: '動詞ます形（去掉ます）＋ 得る（うる・える） / 得ない（えない）',
+        nuanceNote:
+          '書面語氣較重，表示客觀條件上的「有可能／不可能」。注意否定形只能讀作「えない」（如筆記舉例：ありえない＝不可能）。',
+        examples: [
+          {
+            jp: 'そんなことは<ruby>絶対<rt>ぜったい</rt></ruby>にあり<strong><ruby>得<rt>え</rt></ruby>ない</strong>。',
+            plain: 'そんなことは絶対にあり得ない。',
+            zh: '那種事情絕對不可能發生。',
+          },
+          {
+            jp: '<ruby>誰<rt>だれ</rt></ruby>にでも<ruby>起<rt>お</rt></ruby>こり<strong><ruby>得<rt>う</rt></ruby>る</strong><ruby>問題<rt>もんだい</rt></ruby>だ。',
+            plain: '誰にでも起こり得る問題だ。',
+            zh: '這是任何人都可能會遇到的問題。',
+          },
+        ],
+      },
+      {
+        id: 13,
+        pattern: 'おかげで (〜おかげだ)',
+        reading: 'おかげで / おかげだ',
+        titleRuby: 'おかげで（〜おかげだ）',
+        meaningZh: '〜多虧了…（帶來正面好結果的原因）',
+        meaningEn: 'thanks to... / owing to...',
+        connection: '普通形（な形な ／ 名詞の）＋ おかげで / おかげだ',
+        nuanceNote:
+          '用於表達感謝與正面結果（反之，帶來壞結果時用「せいで」）。口語中有時會帶反諷語氣，但基本核心是「多虧了」。',
+        examples: [
+          {
+            jp: '<ruby>先生<rt>せんせい</rt></ruby>の<strong>おかげで</strong>、<ruby>試験<rt>しけん</rt></ruby>に<ruby>合格<rt>ごうかく</rt></ruby>できました。',
+            plain: '先生のおかげで、試験に合格できました。',
+            zh: '多虧了老師，我才能通過考試。',
+          },
+          {
+            jp: '<ruby>毎日<rt>まいにち</rt></ruby><ruby>運動<rt>うんどう</rt></ruby>した<strong>おかげで</strong>、<ruby>体<rt>からだ</rt></ruby>が<ruby>軽<rt>かる</rt></ruby>くなった。',
+            plain: '毎日運動したおかげで、体が軽くなった。',
+            zh: '多虧每天運動，身體變得輕盈了。',
+          },
+        ],
+      },
+      {
+        id: 14,
+        pattern: '恐れがある (おそれがある)',
+        reading: 'おそれがある',
+        titleRuby: '<ruby>恐<rt>おそ</rt></ruby>れがある',
+        meaningZh: '〜恐怕有…的危險／可能性（負面事態）',
+        meaningEn: 'there is a risk/fear that... / might...',
+        connection: '動詞辞書形 ／ 名詞の ＋ 恐れがある',
+        nuanceNote:
+          '新聞、天氣預報與正式公告極常用！僅用於「不好的事情、災害、損失」有可能發生的情況。',
+        examples: [
+          {
+            jp: 'このまま<ruby>雨<rt>あめ</rt></ruby>が<ruby>続<rt>つづ</rt></ruby>くと、<ruby>川<rt>かわ</rt></ruby>が<ruby>氾濫<rt>はんらん</rt></ruby>する<strong><ruby>恐<rt>おそ</rt></ruby>れがある</strong>。',
+            plain: 'このまま雨が続くと、川が氾濫する恐れがある。',
+            zh: '如果雨繼續這樣下下去，河川恐怕有氾濫的危險。',
+          },
+          {
+            jp: '<ruby>個人情報<rt>こじんじょうほう</rt></ruby>が<ruby>漏<rt>も</rt></ruby>れる<strong><ruby>恐<rt>おそ</rt></ruby>れがある</strong>。',
+            plain: '個人情報が漏れる恐れがある。',
+            zh: '恐怕有個人資料外洩的風險。',
+          },
+        ],
+      },
+      {
+        id: 15,
+        pattern: '甲斐がある / 甲斐がない',
+        reading: 'かいがある / かいがない',
+        titleRuby: '<ruby>甲斐<rt>かい</rt></ruby>がある / <ruby>甲斐<rt>かい</rt></ruby>がない',
+        meaningZh: '〜有價值、沒白費 ／ 〜白費、沒有意義',
+        meaningEn: 'worth doing / paid off // in vain / not worth it',
+        connection: '動詞た形・辞書形 ／ 名詞の ＋ 甲斐がある・甲斐がない・甲斐があって',
+        nuanceNote:
+          '表示付出的努力、時間或辛勞「得到了相應的回報（沒白費）」或「毫無回報（白費了）」。',
+        examples: [
+          {
+            jp: '<ruby>一生懸命<rt>いっしょうけんめい</rt></ruby><ruby>勉強<rt>べんきょう</rt></ruby>した<strong><ruby>甲斐<rt>かい</rt></ruby>があって</strong>、N2に<ruby>合格<rt>ごうかく</rt></ruby>した。',
+            plain: '一生懸命勉強した甲斐があって、N2に合格した。',
+            zh: '拼命讀書沒有白費，順利通過了 N2。',
+          },
+          {
+            jp: 'せっかく<ruby>並<rt>なら</rt></ruby>んだのに<ruby>売<rt>う</rt></ruby>り<ruby>切<rt>き</rt></ruby>れで、<ruby>待<rt>ま</rt></ruby>った<strong><ruby>甲斐<rt>かい</rt></ruby>がなかった</strong>。',
+            plain: 'せっかく並んだのに売り切れで、待った甲斐がなかった。',
+            zh: '好不容易排了隊卻賣完了，等得毫無價值（白等了）。',
+          },
+        ],
+      },
+      {
+        id: 16,
+        pattern: '限り (かぎり)',
+        reading: 'かぎり',
+        titleRuby: '<ruby>限<rt>かぎ</rt></ruby>り',
+        meaningZh: '① 只要…（條件限定）　② 竭盡…（極限範圍）',
+        meaningEn: '① as long as... ② to the utmost limit of...',
+        connection: '動詞辞書形・ている・ない形 ／ い形 ／ な形な・である ／ 名詞の ＋ 限り',
+        nuanceNote:
+          '筆記整理了兩大核心：① 限定條件「只要狀態持續就…」（如：只要活著）；② 極限「竭盡全力」（如：力の限り＝盡全力）。',
+        examples: [
+          {
+            jp: '<ruby>体<rt>からだ</rt></ruby>が<ruby>丈夫<rt>じょうぶ</rt></ruby>な<strong><ruby>限<rt>かぎ</rt></ruby>り</strong>、<ruby>旅行<rt>りょこう</rt></ruby>を<ruby>楽<rt>たの</rt></ruby>しみたい。',
+            plain: '体が丈夫な限り、旅行を楽しみたい。',
+            zh: '只要身體還硬朗，我就想繼續享受旅行。',
+          },
+          {
+            jp: '<ruby>力<rt>ちから</rt></ruby>の<strong><ruby>限<rt>かぎ</rt></ruby>り</strong><ruby>走<rt>はし</rt></ruby>り<ruby>抜<rt>ぬ</rt></ruby>いた。',
+            plain: '力の限り走り抜いた。',
+            zh: '竭盡全力跑到了終點。',
+          },
+        ],
+      },
+      {
+        id: 17,
+        pattern: '限りで(は)',
+        reading: 'かぎりで(は)',
+        titleRuby: '<ruby>限<rt>かぎ</rt></ruby>りで（は）',
+        meaningZh: '〜據…所知、就…的認知範圍而言',
+        meaningEn: 'as far as I know / based on what I have seen/heard',
+        connection: '動詞辞書形・た形（知る・見る・聞く・調べる等）＋ 限りでは',
+        nuanceNote:
+          '常與認知動詞（知っている、見た、聞いた、調べた）連用，表示「在我所知道／調查的有限範圍內看來是這樣（超出範圍則不敢保證）」。',
+        examples: [
+          {
+            jp: '<ruby>私<rt>わたし</rt></ruby>が<ruby>知<rt>し</rt></ruby>っている<strong><ruby>限<rt>かぎ</rt></ruby>りでは</strong>、<ruby>彼<rt>かれ</rt></ruby>はとても<ruby>真面目<rt>まじめ</rt></ruby>な<ruby>人<rt>ひと</rt></ruby>だ。',
+            plain: '私が知っている限りでは、彼はとても真面目な人だ。',
+            zh: '就我所知的範圍而言，他是一個非常認真的人。',
+          },
+          {
+            jp: '<ruby>天気予報<rt>てんきよほう</rt></ruby>を<ruby>見<rt>み</rt></ruby>た<strong><ruby>限<rt>かぎ</rt></ruby>りでは</strong>、<ruby>明日<rt>あした</rt></ruby>は<ruby>晴<rt>は</rt></ruby>れるそうだ。',
+            plain: '天気予報を見た限りでは、明日は晴れるそうだ。',
+            zh: '據我所看的天氣預報，明天似乎會放晴。',
+          },
+        ],
+      },
+      {
+        id: 18,
+        pattern: '〜かける (〜かけの)',
+        reading: '〜かける / 〜かけの',
+        titleRuby: '〜かける（〜かけの）',
+        meaningZh: '① 做到一半、沒做完　② 剛開始、快要…',
+        meaningEn: '① half-done / unfinished ② about to... / starting to...',
+        connection: '動詞ます形（去掉ます）＋ かける / かけだ / かけの＋名詞',
+        nuanceNote:
+          '筆記旁補充了「〜になる・快要」！例如：食べかけのパン（吃到一半的麵包）、消えかける（快要熄滅）、言いかけた（話說到一半）。',
+        examples: [
+          {
+            jp: 'テーブルの<ruby>上<rt>うえ</rt></ruby>に<ruby>飲<rt>の</rt></ruby>み<strong>かけの</strong>コーヒーが<ruby>置<rt>お</rt></ruby>いてある。',
+            plain: 'テーブルの上に飲みかけのコーヒーが置いてある。',
+            zh: '桌上放著一杯喝到一半的咖啡。',
+          },
+          {
+            jp: '<ruby>何か<rt>なにか</rt></ruby><ruby>言<rt>い</rt></ruby>い<strong>かけた</strong>が、やめてしまった。',
+            plain: '何か言いかけたが、やめてしまった。',
+            zh: '話剛要說出口（說到一半），卻又停住了。',
+          },
+        ],
+      },
+      {
+        id: 19,
+        pattern: '〜がたい',
+        reading: '〜がたい',
+        titleRuby: '〜がたい',
+        meaningZh: '〜難以…（心理、常識上很難做到）',
+        meaningEn: 'hard to... / difficult to... (psychologically or conceptually)',
+        connection: '動詞ます形（去掉ます）＋ がたい',
+        nuanceNote:
+          '筆記舉了經典例詞「信じがたい（難以置信）」！多接心理或認知類動詞（信じる、理解する、許す、忘れる），並非指技術或體力上的困難。',
+        examples: [
+          {
+            jp: 'そのニュースは<ruby>本当<rt>ほんとう</rt></ruby>とは<ruby>信<rt>しん</rt></ruby>じ<strong>がたい</strong>。',
+            plain: 'そのニュースは本当とは信じがたい。',
+            zh: '那則新聞實在令人難以置信是真的。',
+          },
+          {
+            jp: '<ruby>彼<rt>かれ</rt></ruby>の<ruby>裏切<rt>うらぎ</rt></ruby>りは<ruby>許<rt>ゆる</rt></ruby>し<strong>がたい</strong>。',
+            plain: '彼の裏切りは許しがたい。',
+            zh: '他的背叛令人難以原諒。',
+          },
+        ],
+      },
+      {
+        id: 20,
+        pattern: '〜がち',
+        reading: '〜がち',
+        titleRuby: '〜がち',
+        meaningZh: '〜常常、容易…（多用於負面傾向或壞習慣）',
+        meaningEn: 'tend to... / prone to... (often negative)',
+        connection: '動詞ます形（去掉ます）／ 名詞 ＋ がちだ・がちの・がちに',
+        nuanceNote:
+          '筆記舉例「休みがち（常常請假）」！表示經常出現某種不太理想的狀態或傾向（如：病気がち、遅れがち、忘れがち）。',
+        examples: [
+          {
+            jp: '<ruby>彼<rt>かれ</rt></ruby>は<ruby>最近<rt>さいきん</rt></ruby><ruby>体調<rt>たいちょう</rt></ruby>が<ruby>悪<rt>わる</rt></ruby>く、<ruby>学校<rt>がっこう</rt></ruby>を<ruby>休<rt>やす</rt></ruby>み<strong>がち</strong>だ。',
+            plain: '彼は最近体調が悪く、学校を休みがちだ。',
+            zh: '他最近身體不舒服，常常請假沒去上學。',
+          },
+          {
+            jp: '<ruby>一人暮<rt>ひとりぐ</rt></ruby>らしだと、<ruby>野菜<rt>やさい</rt></ruby>が<ruby>不足<rt>ふそく</rt></ruby>し<strong>がち</strong>になる。',
+            plain: '一人暮らしだと、野菜が不足しがちになる。',
+            zh: '一個人住的話，很容易變得蔬菜攝取不足。',
+          },
+        ],
+      },
+      {
+        id: 21,
+        pattern: '(か)と思うと / (か)と思ったら',
+        reading: '(か)とおもうと / (か)とおもったら',
+        titleRuby: '（か）と<ruby>思<rt>おも</rt></ruby>うと / （か）と<ruby>思<rt>おも</rt></ruby>ったら',
+        meaningZh: '① 剛…就…（緊迫性、瞬間變化）　② 本以為…卻…（意外性）',
+        meaningEn: 'just when... / no sooner than... / thought... but surprisingly...',
+        connection: '動詞た形 ＋ （か）と思うと / （か）と思ったら',
+        nuanceNote:
+          '筆記精準標註了兩大語感：①「剛剛…就緊接著發生意外的變化」（如：剛放晴就突然下起雨來）；②「本以為…卻出乎意料地…」。注意後項不能是說話者自己的意志行為。',
+        examples: [
+          {
+            jp: '<ruby>空<rt>そら</rt></ruby>が<ruby>暗<rt>くら</rt></ruby>くなった<strong>かと思うと</strong>、<ruby>急<rt>きゅう</rt></ruby>に<ruby>大雨<rt>おおあめ</rt></ruby>が<ruby>降<rt>ふ</rt></ruby>り<ruby>出<rt>だ</rt></ruby>した。',
+            plain: '空が暗くなったかと思うと、急に大雨が降り出した。',
+            zh: '天空剛暗下來，緊接著就下起了大雨。',
+          },
+          {
+            jp: '<ruby>赤<rt>あか</rt></ruby>ちゃんが<ruby>泣<rt>な</rt></ruby>き<ruby>止<rt>や</rt></ruby>んだ<strong>と思ったら</strong>、また<ruby>泣<rt>な</rt></ruby>き<ruby>始<rt>はじ</rt></ruby>めた。',
+            plain: '赤ちゃんが泣き止んだと思ったら、また泣き始めた。',
+            zh: '本以為寶寶不哭了，沒想到又哭了起來。',
+          },
+        ],
+      },
+      {
+        id: 22,
+        pattern: '(か)と思えば',
+        reading: '(か)とおもえば',
+        titleRuby: '（か）と<ruby>思<rt>おも</rt></ruby>えば',
+        meaningZh: '① 原以為…但卻…　② 既…又…（對比、並列反差）',
+        meaningEn: 'just when you think... / on the one hand... while on the other...',
+        connection: '普通形（な形・名詞＋だ）＋ （か）と思えば',
+        nuanceNote:
+          '與 21 類近，但「〜かと思えば」更能用來描寫同一人或事物「一會兒這樣、一會兒又那樣」的強烈反差並列（如：剛剛還在笑，轉眼又生氣了）。',
+        examples: [
+          {
+            jp: '<ruby>彼女<rt>かのじょ</rt></ruby>は<ruby>笑<rt>わら</rt></ruby>っている<strong>かと思えば</strong>、<ruby>急<rt>きゅう</rt></ruby>に<ruby>怒<rt>おこ</rt></ruby>り<ruby>出<rt>だ</rt></ruby>す。',
+            plain: '彼女は笑っているかと思えば、急に怒り出す。',
+            zh: '她剛剛還在笑，轉眼間卻突然發起脾氣來。',
+          },
+          {
+            jp: '<ruby>春<rt>はる</rt></ruby>になった<strong>かと思えば</strong>、また<ruby>冬<rt>ふゆ</rt></ruby>のように<ruby>寒<rt>さむ</rt></ruby>くなった。',
+            plain: '春になったかと思えば、また冬のように寒くなった。',
+            zh: '原以為已經到春天了，卻又變得像冬天一樣冷。',
+          },
+        ],
+      },
+      {
+        id: 23,
+        pattern: '〜か〜ないかのうちに',
+        reading: '〜か〜ないかのうちに',
+        titleRuby: '〜か〜ないかのうちに',
+        meaningZh: '〜剛要…就馬上…（強調極短的時間差・Timing）',
+        meaningEn: 'no sooner than... / just as... / barely... when...',
+        connection: '動詞辞書形・た形 ＋ か ＋ 同じ動詞ない形 ＋ かのうちに',
+        nuanceNote:
+          '筆記特別標註「か＝不確定、うちに＝強調 timing」！表示動作 A 幾乎還沒完全結束的瞬間，動作 B 就緊接著發生了，時間間隔極短。',
+        examples: [
+          {
+            jp: 'ベルが<ruby>鳴<rt>な</rt></ruby>る<strong>か鳴らないかのうちに</strong>、<ruby>生徒<rt>せいと</rt></ruby>たちは<ruby>教室<rt>きょうしつ</rt></ruby>を<ruby>飛<rt>と</rt></ruby>び<ruby>出<rt>だ</rt></ruby>した。',
+            plain: 'ベルが鳴るか鳴らないかのうちに、生徒たちは教室を飛び出した。',
+            zh: '下課鐘剛響（還沒響完）的瞬間，學生們就衝出了教室。',
+          },
+          {
+            jp: '<ruby>布団<rt>ふとん</rt></ruby>に<ruby>入<rt>はい</rt></ruby>った<strong>か入らないかのうちに</strong>、<ruby>眠<rt>ねむ</rt></ruby>ってしまった。',
+            plain: '布団に入ったか入らないかのうちに、眠ってしまった。',
+            zh: '剛鑽進被窩的一瞬間就睡著了。',
+          },
+        ],
+      },
+      {
+        id: 24,
+        pattern: '〜かねる',
+        reading: '〜かねる',
+        titleRuby: '〜かねる',
+        meaningZh: '〜難以…（委婉拒絕、心理或立場上無法做到）',
+        meaningEn: 'cannot / unable to / hesitate to... (polite refusal)',
+        connection: '動詞ます形（去掉ます）＋ かねる',
+        nuanceNote:
+          '商務與正式場合極常用的委婉拒絕表現！並非物理能力不足，而是「基於立場、規定或顧慮，實在難以答應/做到」（如：恕難回答、難以贊成）。',
+        examples: [
+          {
+            jp: 'その<ruby>件<rt>けん</rt></ruby>については、<ruby>私<rt>わたし</rt></ruby>からはお<ruby>答<rt>こた</rt></ruby>えし<strong>かねます</strong>。',
+            plain: 'その件については、私からはお答えしかねます。',
+            zh: '關於這件事，由我來回答實在有些為難（恕難回答）。',
+          },
+          {
+            jp: '<ruby>彼<rt>かれ</rt></ruby>の<ruby>意見<rt>いけん</rt></ruby>には<ruby>賛成<rt>さんせい</rt></ruby>し<strong>かねる</strong>。',
+            plain: '彼の意見には賛成しかねる。',
+            zh: '對於他的意見，我實在難以贊成。',
+          },
+        ],
+      },
+      {
+        id: 25,
+        pattern: '〜かねない',
+        reading: '〜かねない',
+        titleRuby: '〜かねない',
+        meaningZh: '〜有可能…、搞不好會…（負面事情發生的可能性）',
+        meaningEn: 'might / could possibly... (risk of a negative outcome)',
+        connection: '動詞ます形（去掉ます）＋ かねない',
+        nuanceNote:
+          '⚠️ 注意！「かねない」不是「かねる」的單純否定！它的意思是「說不定真的會做出／發生某件不好的事」（如：不休息的話搞不好會病倒）。',
+        examples: [
+          {
+            jp: 'そんなにスピードを<ruby>出<rt>だ</rt></ruby>すと、<ruby>事故<rt>じこ</rt></ruby>を<ruby>起<rt>お</rt></ruby>こし<strong>かねない</strong>。',
+            plain: 'そんなにスピードを出すと、事故を起こしかねない。',
+            zh: '開那麼快的話，搞不好會發生車禍的。',
+          },
+          {
+            jp: '<ruby>無理<rt>むり</rt></ruby>ばかりしていると、<ruby>体<rt>からだ</rt></ruby>を<ruby>壊<rt>こわ</rt></ruby>し<strong>かねない</strong>よ。',
+            plain: '無理ばかりしていると、体を壊しかねないよ。',
+            zh: '一直這麼勉強自己的話，很有可能會把身體搞垮喔。',
+          },
+        ],
+      },
+      {
+        id: 26,
+        pattern: 'からいうと / からいえば / からいって',
+        reading: 'からいうと / からいえば / からいって',
+        titleRuby: 'から<ruby>言<rt>い</rt></ruby>うと / から<ruby>言<rt>い</rt></ruby>えば / から<ruby>言<rt>い</rt></ruby>って',
+        meaningZh: '〜從…來說的話（以某事物作為判斷的起點/基準）',
+        meaningEn: 'speaking from... / in terms of...',
+        connection: '名詞 ＋ からいうと / からいえば / からいって',
+        nuanceNote:
+          '筆記在「からいって」下寫了「起點」！以某個條件、能力或資料作為判斷基準來下結論（如：從他的實力來說、從結果來看）。',
+        examples: [
+          {
+            jp: '<ruby>彼<rt>かれ</rt></ruby>の<ruby>実力<rt>じつりょく</rt></ruby><strong>からいうと</strong>、<ruby>合格<rt>ごうかく</rt></ruby>は<ruby>間違<rt>まちが</rt></ruby>いないだろう。',
+            plain: '彼の実力からいうと、合格は間違いないだろう。',
+            zh: '從他的實力來說的話，及格應該是毫無疑問的吧。',
+          },
+          {
+            jp: '<ruby>値段<rt>ねだん</rt></ruby><strong>からいって</strong>、この<ruby>品質<rt>ひんしつ</rt></ruby>はかなりお<ruby>得<rt>とく</rt></ruby>だ。',
+            plain: '値段からいって、この品質はかなりお得だ。',
+            zh: '從價格來說的話，這樣的品質相當划算。',
+          },
+        ],
+      },
+      {
+        id: 27,
+        pattern: 'から見ると / から見れば / から見て',
+        reading: 'からみると / からみれば / からみて',
+        titleRuby: 'から<ruby>見<rt>み</rt></ruby>ると / から<ruby>見<rt>み</rt></ruby>れば / から<ruby>見<rt>み</rt></ruby>て',
+        meaningZh: '〜從…來看（從某個觀察角度或立場判斷）',
+        meaningEn: 'judging from... / from the viewpoint of...',
+        connection: '名詞 ＋ から見ると / から見れば / から見て',
+        nuanceNote:
+          '強調從某個特定的人（如父母、外國人）或客觀角度（如外表、數據）進行觀察並做出判斷。',
+        examples: [
+          {
+            jp: '<ruby>親<rt>おや</rt></ruby><strong>から見ると</strong>、いくつになっても<ruby>子供<rt>こども</rt></ruby>は<ruby>子供<rt>こども</rt></ruby>だ。',
+            plain: '親から見ると、いくつになっても子供は子供だ。',
+            zh: '從父母的角度來看，不管長到幾歲孩子永遠都是孩子。',
+          },
+          {
+            jp: '<ruby>様子<rt>ようす</rt></ruby><strong>から見て</strong>、<ruby>彼<rt>かれ</rt></ruby>は<ruby>何<rt>なに</rt></ruby>も<ruby>知<rt>し</rt></ruby>らないようだ。',
+            plain: '様子から見て、彼は何も知らないようだ。',
+            zh: '從他的樣子來看，他似乎什麼都不知道。',
+          },
+        ],
+      },
+      {
+        id: 28,
+        pattern: 'からすると / からすれば',
+        reading: 'からすると / からすれば',
+        titleRuby: 'からすると / からすれば',
+        meaningZh: '〜從（立場）衡量的話 / 根據…來推測',
+        meaningEn: 'from the standpoint of... / judging by...',
+        connection: '名詞 ＋ からすると / からすれば',
+        nuanceNote:
+          '筆記點出核心：「從（立場）衡量的話」！站在某人的立場去設想，或者根據某個線索（如足跡、表情）進行推理判斷。',
+        examples: [
+          {
+            jp: '<ruby>現場<rt>げんば</rt></ruby>の<ruby>状況<rt>じょうきょう</rt></ruby><strong>からすると</strong>、<ruby>犯人<rt>はんにん</rt></ruby>は<ruby>窓<rt>まど</rt></ruby>から<ruby>入<rt>はい</rt></ruby>ったらしい。',
+            plain: '現場の状況からすると、犯人は窓から入ったらしい。',
+            zh: '從現場的狀況來判斷的話，犯人似乎是從窗戶進來的。',
+          },
+          {
+            jp: '<ruby>私<rt>わたし</rt></ruby>の<ruby>立場<rt>たちば</rt></ruby><strong>からすれば</strong>、その<ruby>提案<rt>ていあん</rt></ruby>には<ruby>賛成<rt>さんせい</rt></ruby>できない。',
+            plain: '私の立場からすれば、その提案には賛成できない。',
+            zh: '從我的立場來衡量的話，無法贊成那個提案。',
+          },
+        ],
+      },
+      {
+        id: 29,
+        pattern: 'からして',
+        reading: 'からして',
+        titleRuby: 'からして',
+        meaningZh: '〜從（單純）來看／僅從…（連…都…，更別說其他了）',
+        meaningEn: 'judging even from... / even [A] is..., let alone...',
+        connection: '名詞 ＋ からして',
+        nuanceNote:
+          '筆記旁舉了「態度からして失礼（光看態度就很沒禮貌）」！舉出一個最明顯、最基本的例子，強調「僅從這一點來看就已經這樣了，其他方面更不用說」。',
+        examples: [
+          {
+            jp: '<ruby>彼<rt>かれ</rt></ruby>は<ruby>態度<rt>たいど</rt></ruby><strong>からして</strong><ruby>失礼<rt>しつれい</rt></ruby>だ。',
+            plain: '彼は態度からして失礼だ。',
+            zh: '他光是態度就很沒禮貌（其他更不用說了）。',
+          },
+          {
+            jp: 'この<ruby>料理<rt>りょうり</rt></ruby>は<ruby>匂<rt>にお</rt></ruby>い<strong>からして</strong>おいしそうだ。',
+            plain: 'この料理は匂いからしておいしそうだ。',
+            zh: '這道料理光是聞香味就覺得很好吃。',
+          },
+        ],
+      },
+      {
+        id: 30,
+        pattern: 'からといって',
+        reading: 'からといって',
+        titleRuby: 'からといって',
+        meaningZh: '〜雖說…（但也不能因此就…）',
+        meaningEn: 'just because... (does not mean...)',
+        connection: '普通形 ＋ からといって',
+        nuanceNote:
+          '表示「雖然承認前面的原因或理由，但不能因此就推導出理所當然的結論」，後面常與「〜とは限らない（未必）」「〜わけではない（並不是）」呼應。',
+        examples: [
+          {
+            jp: 'お<ruby>金<rt>かね</rt></ruby>がある<strong>からといって</strong>、<ruby>幸<rt>しあわ</rt></ruby>せだとは<ruby>限<rt>かぎ</rt></ruby>らない。',
+            plain: 'お金があるからといって、幸せだとは限らない。',
+            zh: '雖說有錢，但並不一定就幸福。',
+          },
+          {
+            jp: '<ruby>簡単<rt>かんたん</rt></ruby>だ<strong>からといって</strong>、<ruby>油断<rt>ゆだん</rt></ruby>してはいけない。',
+            plain: '簡単だからといって、油断してはいけない。',
+            zh: '雖說很簡單，但也不能因此掉以輕心。',
+          },
+        ],
+      },
+      {
+        id: 31,
+        pattern: '〜から〜にかけて',
+        reading: '〜から〜にかけて',
+        titleRuby: '〜から〜にかけて',
+        meaningZh: '〜從…到…（大致的時間或空間範圍）',
+        meaningEn: 'from... through / to... (approximate range in time/space)',
+        connection: '名詞A ＋ から ＋ 名詞B ＋ にかけて',
+        nuanceNote:
+          '筆記右上角寫了超棒的對比：Accurate: から〜まで！沒錯，「から〜まで」表示精確起訖點；而「から〜にかけて」表示「從 A 到 B 一帶／這段期間（大致範圍）」，常見於天氣預報。',
+        examples: [
+          {
+            jp: '<ruby>今夜<rt>こんや</rt></ruby><strong>から</strong><ruby>明日<rt>あした</rt></ruby>の<ruby>朝<rt>あさ</rt></ruby><strong>にかけて</strong>、<ruby>強<rt>つよ</rt></ruby>い<ruby>雨<rt>あめ</rt></ruby>が<ruby>降<rt>ふ</rt></ruby>るでしょう。',
+            plain: '今夜から明日の朝にかけて、強い雨が降るでしょう。',
+            zh: '從今晚到明天早上這段期間，應該會下大雨吧。',
+          },
+          {
+            jp: '<ruby>関東<rt>かんとう</rt></ruby><strong>から</strong><ruby>東北<rt>とうほく</rt></ruby><strong>にかけて</strong>、<ruby>広<rt>ひろ</rt></ruby>い<ruby>範囲<rt>はんい</rt></ruby>で<ruby>地震<rt>じしん</rt></ruby>があった。',
+            plain: '関東から東北にかけて、広い範囲で地震があった。',
+            zh: '從關東到東北一帶，在廣大範圍內發生了地震。',
+          },
+        ],
+      },
+      {
+        id: 32,
+        pattern: 'からには',
+        reading: 'からには',
+        titleRuby: 'からには',
+        meaningZh: '〜既然…就…（強烈的決心、義務或責任）',
+        meaningEn: 'now that... / since... (strong determination or obligation)',
+        connection: '動詞辞書形・た形 ／ 名詞である ＋ からには',
+        nuanceNote:
+          '與第 3 條「以上は」、第 8 條「うえは」同為「既然…就…」系列！強調既然已經決定或開始做某事，就理所當然要貫徹到底。',
+        examples: [
+          {
+            jp: '<ruby>日本<rt>にほん</rt></ruby>に<ruby>来<rt>き</rt></ruby>た<strong>からには</strong>、<ruby>日本語<rt>にほんご</rt></ruby>をペラペラになりたい。',
+            plain: '日本に来たからには、日本語をペラペラになりたい。',
+            zh: '既然來到了日本，就想把日文說得流利。',
+          },
+          {
+            jp: '<ruby>約束<rt>やくそく</rt></ruby>した<strong>からには</strong>、<ruby>絶対<rt>ぜったい</rt></ruby>に<ruby>破<rt>やぶ</rt></ruby>らない。',
+            plain: '約束したからには、絶対に破らない。',
+            zh: '既然約定好了，就絕對不會違約。',
+          },
+        ],
+      },
+      {
+        id: 33,
+        pattern: 'からこそ',
+        reading: 'からこそ',
+        titleRuby: 'からこそ',
+        meaningZh: '〜正是因為…才…（強調唯一、最重要的原因）',
+        meaningEn: 'precisely because... / it is because... that...',
+        connection: '普通形（な形だ・名詞だ）＋ からこそ',
+        nuanceNote:
+          '在原因「から」後面加上強調助詞「こそ」，強烈凸顯「不是別的原因，正是因為這個理由，所以才會…」。',
+        examples: [
+          {
+            jp: 'あなたのことが<ruby>大切<rt>たいせつ</rt></ruby>だ<strong>からこそ</strong>、<ruby>厳<rt>きび</rt></ruby>しく<ruby>言<rt>い</rt></ruby>うのです。',
+            plain: 'あなたのことが大切だからこそ、厳しく言うのです。',
+            zh: '正是因為在乎你，才會對你說得這麼嚴厲。',
+          },
+          {
+            jp: '<ruby>苦労<rt>くろう</rt></ruby>した<strong>からこそ</strong>、<ruby>人<rt>ひと</rt></ruby>の<ruby>痛<rt>いた</rt></ruby>みが<ruby>分<rt>わ</rt></ruby>かるようになる。',
+            plain: '苦労したからこそ、人の痛みが分かるようになる。',
+            zh: '正是因為吃過苦，才更能體會別人的痛苦。',
+          },
+        ],
+      },
+      {
+        id: 34,
+        pattern: 'かのように / かのような / かのようだ',
+        reading: 'かのように / かのような / かのようだ',
+        titleRuby: 'かのように / かのような / かのようだ',
+        meaningZh: '〜好像…一樣（實際上並非如此的比喻）',
+        meaningEn: 'as if... / as though... (contrary to fact)',
+        connection: '普通形（な形・名詞は「だ」不要，或接である）＋ かのように・な・だ',
+        nuanceNote:
+          '筆記詳細標出了詞性接續：修飾動詞用「かのように」、修飾名詞用「かのような」、結尾用「かのようだ」。強調「明明不是那樣，看起來卻簡直像…一樣」。',
+        examples: [
+          {
+            jp: '<ruby>彼<rt>かれ</rt></ruby>は<ruby>何<rt>なに</rt></ruby>も<ruby>知<rt>し</rt></ruby>らない<strong>かのように</strong>、<ruby>平気<rt>へいき</rt></ruby>な<ruby>顔<rt>かお</rt></ruby>をしていた。',
+            plain: '彼は何も知らないかのように、平気な顔をしていた。',
+            zh: '他擺出一副若無其事的表情，好像什麼都不知道一樣。',
+          },
+          {
+            jp: '<ruby>夢<rt>ゆめ</rt></ruby>を<ruby>見<rt>み</rt></ruby>ている<strong>かのようだ</strong>。',
+            plain: '夢を見ているかのようだ。',
+            zh: '簡直就像在做夢一樣。',
+          },
+        ],
+      },
+      {
+        id: 35,
+        pattern: 'かわりに (代わりに)',
+        reading: 'かわりに',
+        titleRuby: 'かわりに（<ruby>代<rt>か</rt></ruby>わりに）',
+        meaningZh: '① 代替…　② 作為交換／補償（雖然…但相對地…）',
+        meaningEn: '① instead of... ② in exchange for... / on the other hand (compensation)',
+        connection: '動詞辞書形・た形 ／ い形 ／ な形な ／ 名詞の ＋ かわりに',
+        nuanceNote:
+          '筆記把所有核心功能都寫出來了：①「代替」（如：代替父親出席）；②「交換・補償」（如：我幫你做飯，作為交換你去洗碗／這間房雖然小，但相對地房租很便宜）。',
+        examples: [
+          {
+            jp: '<ruby>父<rt>ちち</rt></ruby>の<strong>かわりに</strong>、<ruby>私<rt>わたし</rt></ruby>が<ruby>結婚式<rt>けっこんしき</rt></ruby>に<ruby>出席<rt>しゅっせき</rt></ruby>した。',
+            plain: '父のかわりに、私が結婚式に出席した。',
+            zh: '我代替父親出席了婚禮。',
+          },
+          {
+            jp: 'この<ruby>部屋<rt>へや</rt></ruby>は<ruby>狭<rt>せま</rt></ruby>い<strong>かわりに</strong>、<ruby>駅<rt>えき</rt></ruby>から<ruby>近<rt>ちか</rt></ruby>くて<ruby>便利<rt>べんり</rt></ruby>だ。',
+            plain: 'この部屋は狭いかわりに、駅から近くて便利だ。',
+            zh: '這間房間雖然狹小，但相對地離車站很近很方便。',
+          },
+        ],
+      },
+      {
+        id: 36,
+        pattern: '〜気味 (ぎみ)',
+        reading: '〜ぎみ',
+        titleRuby: '〜<ruby>気味<rt>ぎみ</rt></ruby>',
+        meaningZh: '〜感覺有點…、稍微有…的傾向（多為身體或狀態微恙）',
+        meaningEn: 'a touch of... / slightly / tending to feel...',
+        connection: '動詞ます形（去掉ます）／ 名詞 ＋ 気味だ・気味の・気味に',
+        nuanceNote:
+          '表示說話者主觀感覺到「稍微有一點點某種狀態（多半是不太理想的狀態）」，例如：風邪気味（有點感冒）、疲れ気味（有點累）、太り気味（有點發胖）。',
+        examples: [
+          {
+            jp: '<ruby>昨日<rt>きのう</rt></ruby>からちょっと<ruby>風邪<rt>かぜ</rt></ruby><strong><ruby>気味<rt>ぎみ</rt></ruby></strong>で、<ruby>喉<rt>のど</rt></ruby>が<ruby>痛<rt>いた</rt></ruby>い。',
+            plain: '昨日からちょっと風邪気味で、喉が痛い。',
+            zh: '從昨天開始感覺有點感冒，喉嚨痛痛的。',
+          },
+          {
+            jp: '<ruby>最近<rt>さいきん</rt></ruby><ruby>仕事<rt>しごと</rt></ruby>が<ruby>忙<rt>いそが</rt></ruby>しくて、<ruby>疲<rt>つか</rt></ruby>れ<strong><ruby>気味<rt>ぎみ</rt></ruby></strong>だ。',
+            plain: '最近仕事が忙しくて、疲れ気味だ。',
+            zh: '最近工作很忙，感覺有點疲勞。',
+          },
+        ],
+      },
+      {
+        id: 37,
+        pattern: '〜きり',
+        reading: '〜きり',
+        titleRuby: '〜きり',
+        meaningZh: '① 自從…之後就（一直沒再…）　② 只有、僅僅…',
+        meaningEn: '① since... (and never again) ② only, just...',
+        connection: '① 動詞た形 ＋ きり　② 名詞・数量詞 ＋ きり',
+        nuanceNote:
+          '兩大用法：① 接「動詞た形」後，表示「自從做了那件事之後，就一直保持那個狀態／沒再發生後續」（如：見了一面之後就再也沒見過）；② 接名詞/數量詞後表示「僅僅、只有」（如：二人きり＝只有兩個人）。',
+        examples: [
+          {
+            jp: '<ruby>彼<rt>かれ</rt></ruby>とは10<ruby>年前<rt>ねんまえ</rt></ruby>に<ruby>会<rt>あ</rt></ruby>った<strong>きり</strong>、<ruby>一度<rt>いちど</rt></ruby>も<ruby>会<rt>あ</rt></ruby>っていない。',
+            plain: '彼とは10年前に会ったきり、一度も会っていない。',
+            zh: '自從10年前見過他一次之後，就再也沒有見過面了。',
+          },
+          {
+            jp: '<ruby>部屋<rt>へや</rt></ruby>には<ruby>私<rt>わたし</rt></ruby><ruby>一人<rt>ひとり</rt></ruby><strong>きり</strong>だった。',
+            plain: '部屋には私一人きりだった。',
+            zh: '房間裡只有我一個人而已。',
+          },
+        ],
+      },
+      {
+        id: 38,
+        pattern: '〜きる / 〜きれる',
+        reading: '〜きる / 〜きれる',
+        titleRuby: '〜きる / 〜きれる',
+        meaningZh: '① 完、盡（徹底完成）　② 極限（非常…）　③ 能夠做完（可能形）',
+        meaningEn: '① finish completely ② extremely (e.g. 疲れ切る) ③ be able to finish (きれる)',
+        connection: '動詞ます形（去掉ます）＋ きる / きれる / きれない',
+        nuanceNote:
+          '筆記列出了超實用的三個經典例子：つかいきる（用完）、疲れ切る（累壞了・達到極限）、読み切る（讀完）！而「〜きれる／〜きれない」則表示「能不能做完」（如：食べきれない＝吃不完）。',
+        examples: [
+          {
+            jp: 'この<ruby>本<rt>ほん</rt></ruby>は<ruby>面白<rt>おもしろ</rt></ruby>くて、<ruby>一日<rt>いちにち</rt></ruby>で<ruby>読<rt>よ</rt></ruby>み<strong>きった</strong>。',
+            plain: 'この本は面白くて、一日で読みきった。',
+            zh: '這本書太有趣了，一天就全部讀完了。',
+          },
+          {
+            jp: '<ruby>料理<rt>りょうり</rt></ruby>が<ruby>多<rt>おお</rt></ruby>すぎて、<ruby>全部<rt>ぜんぶ</rt></ruby>は<ruby>食<rt>た</rt></ruby>べ<strong>きれない</strong>。',
+            plain: '料理が多すぎて、全部は食べきれない。',
+            zh: '料理太多了，根本吃不完。',
+          },
+        ],
+      },
+      {
+        id: 39,
+        pattern: 'くせに',
+        reading: 'くせに',
+        titleRuby: 'くせに',
+        meaningZh: '〜明明…卻…（帶有指責、輕視或不滿的語氣）',
+        meaningEn: 'even though... / despite... (critical or reproachful tone)',
+        connection: '普通形（な形な ／ 名詞の）＋ くせに',
+        nuanceNote:
+          '與「のに」意思相近，但「くせに」帶有強烈的「責備、看不起、不服氣」的負面情感，不能用於自己身上（不可說「私は…くせに」），也不能用於敬語對象。',
+        examples: [
+          {
+            jp: '<ruby>自分<rt>じぶん</rt></ruby>でできない<strong>くせに</strong>、<ruby>人<rt>ひと</rt></ruby>の<ruby>文句<rt>もんく</rt></ruby>ばかり<ruby>言<rt>い</rt></ruby>う。',
+            plain: '自分でできないくせに、人の文句ばかり言う。',
+            zh: '自己明明就不會做，卻只會一直挑別人的毛病。',
+          },
+          {
+            jp: '<ruby>知<rt>し</rt></ruby>っている<strong>くせに</strong>、<ruby>教<rt>おし</rt></ruby>えてくれない。',
+            plain: '知っているくせに、教えてくれない。',
+            zh: '明明就知道，卻不肯告訴我。',
+          },
+        ],
+      },
+      {
+        id: 40,
+        pattern: 'くらい / ぐらい',
+        reading: 'くらい / ぐらい',
+        titleRuby: 'くらい（formal）/ ぐらい（informal）',
+        meaningZh: '① 大約數量程度　② 表程度（…到…的地步）　③ 最低限度（起碼、至少…）',
+        meaningEn: '① about / approximately ② to the extent that... ③ at least...',
+        connection: '動詞辞書形・た形・ない形 ／ い形 ／ な形な ／ 名詞 ＋ くらい・ぐらい',
+        nuanceNote:
+          '筆記完整整理了三個重點：① 大約數量；② 誇張形容程度（如：死ぬくらい疲れた＝累到快死掉）；③ 最低限度「起碼、至少」（如：挨拶くらいしなさい＝起碼打個招呼吧）。',
+        examples: [
+          {
+            jp: '<ruby>忙<rt>いそが</rt></ruby>しくても、<ruby>連絡<rt>れんらく</rt></ruby><strong>くらい</strong>できるでしょう。',
+            plain: '忙しくても、連絡くらいできるでしょう。',
+            zh: '就算再忙，起碼聯絡一下總做得到吧。',
+          },
+          {
+            jp: '<ruby>試験<rt>しけん</rt></ruby>に<ruby>合格<rt>ごうかく</rt></ruby>して、<ruby>泣<rt>な</rt></ruby>きたい<strong>くらい</strong><ruby>嬉<rt>うれ</rt></ruby>しかった。',
+            plain: '試験に合格して、泣きたいくらい嬉しかった。',
+            zh: '通過了考試，高興得簡直想哭出來。',
+          },
+        ],
+      },
+      {
+        id: 41,
+        pattern: '〜げ',
+        reading: '〜げ',
+        titleRuby: '〜げ',
+        meaningZh: '〜看似、好像流露出…的樣子（多接情感、心理狀態）',
+        meaningEn: 'seeming / looking as if... (appearance of emotion or state)',
+        connection: 'い形・な形（去い・な）＋ げだ・げな・げに',
+        nuanceNote:
+          '筆記舉了經典例詞「ありげだった／悲しげ（看起來很悲傷）」並對照「〜そうだ（好像）」。「〜げ」偏書面文學感，用於從他人表情、態度推測其內心情感。',
+        examples: [
+          {
+            jp: '<ruby>彼女<rt>かのじょ</rt></ruby>は<ruby>何<rt>なに</rt></ruby>か<ruby>言<rt>い</rt></ruby>いた<strong>げな</strong><ruby>表情<rt>ひょうじょう</rt></ruby>でこちらを<ruby>見<rt>み</rt></ruby>ていた。',
+            plain: '彼女は何か言いたげな表情でこちらを見ていた。',
+            zh: '她露出一副好像有話想說的表情看著這邊。',
+          },
+          {
+            jp: '<ruby>子犬<rt>こいぬ</rt></ruby>が<ruby>悲<rt>かな</rt></ruby>し<strong>げに</strong><ruby>鳴<rt>な</rt></ruby>いている。',
+            plain: '子犬が悲しげに鳴いている。',
+            zh: '小狗看起來很悲傷地叫著。',
+          },
+        ],
+      },
+      {
+        id: 42,
+        pattern: 'こと(も)なく',
+        reading: 'こと(も)なく',
+        titleRuby: 'こと（も）なく',
+        meaningZh: '〜沒有…就…（＝表否定，相當於「〜ずに／〜ないで」）',
+        meaningEn: 'without doing... (smoothly or without incident)',
+        connection: '動詞辞書形 ＋ こと（も）なく',
+        nuanceNote:
+          '筆記標註「ことなく → ずに / ないで」！語氣較「ずに」更書面、正式，常用於表示事情順利進行，「沒有發生意外或問題就完成了」。',
+        examples: [
+          {
+            jp: '<ruby>飛行機<rt>ひこうき</rt></ruby>は<ruby>遅<rt>おく</rt></ruby>れる<strong>ことなく</strong>、<ruby>予定通<rt>よていどお</rt></ruby>り<ruby>到着<rt>とうちゃく</rt></ruby>した。',
+            plain: '飛行機は遅れることなく、予定通り到着した。',
+            zh: '飛機沒有誤點，準時抵達了。',
+          },
+          {
+            jp: '<ruby>彼<rt>かれ</rt></ruby>は<ruby>一度<rt>いちど</rt></ruby>も<ruby>休<rt>やす</rt></ruby>む<strong>ことなく</strong>、<ruby>毎日<rt>まいにち</rt></ruby><ruby>練習<rt>れんしゅう</rt></ruby>を<ruby>続<rt>つづ</rt></ruby>けた。',
+            plain: '彼は一度も休むことなく、毎日練習を続けた。',
+            zh: '他一次也沒有休息，每天持續練習。',
+          },
+        ],
+      },
+      {
+        id: 43,
+        pattern: 'ことに',
+        reading: 'ことに',
+        titleRuby: 'ことに',
+        meaningZh: '〜令人感到…的是（表達說話者的主觀驚訝、遺憾或慶幸）',
+        meaningEn: 'to my surprise / fortunately / regrettably...',
+        connection: 'い形・な形な・動詞た形（驚いた・困った等）＋ ことに',
+        nuanceNote:
+          '筆記特別提醒「多數 PAST TENSE」！置於句首或前半句，修飾整句話的情感色彩（如：嬉しいことに＝令人高興的是、驚いたことに＝令人驚訝的是）。',
+        examples: [
+          {
+            jp: '<ruby>驚<rt>おどろ</rt></ruby>いた<strong>ことに</strong>、10<ruby>歳<rt>さい</rt></ruby>の<ruby>少年<rt>しょうねん</rt></ruby>がその<ruby>難問<rt>なんもん</rt></ruby>を<ruby>解<rt>と</rt></ruby>いた。',
+            plain: '驚いたことに、10歳の少年がその難問を解いた。',
+            zh: '令人驚訝的是，一位10歲的少年解開了那道難題。',
+          },
+          {
+            jp: '<ruby>残念<rt>ざんねん</rt></ruby>な<strong>ことに</strong>、<ruby>明日<rt>あした</rt></ruby>のイベントは<ruby>中止<rt>ちゅうし</rt></ruby>になった。',
+            plain: '残念なことに、明日のイベントは中止になった。',
+            zh: '遺憾的是，明天的活動取消了。',
+          },
+        ],
+      },
+      {
+        id: 44,
+        pattern: 'ことだから',
+        reading: 'ことだから',
+        titleRuby: 'ことだから',
+        meaningZh: '〜正因為是…（根據某人的性格或平時特徵做出的推測）',
+        meaningEn: 'precisely because of who [someone] is... (characteristic-based guess)',
+        connection: '名詞（人・組織）＋ の ＋ ことだから',
+        nuanceNote:
+          '筆記精準點出「個人特徵」！前面幾乎都是接「某人的名字／身分＋の」，表示「因為太了解他的為人或習慣了，所以推測他一定會…」。',
+        examples: [
+          {
+            jp: '<ruby>真面目<rt>まじめ</rt></ruby>な<ruby>田中<rt>たなか</rt></ruby>さんの<strong>ことだから</strong>、<ruby>きっと<rt></rt></ruby><ruby>時間通<rt>じかんどお</rt></ruby>りに<ruby>来<rt>く</rt></ruby>るだろう。',
+            plain: '真面目な田中さんのことだから、きっと時間通りに来るだろう。',
+            zh: '正因為是認真的田中先生，他一定會準時來的吧。',
+          },
+          {
+            jp: '<ruby>彼<rt>かれ</rt></ruby>の<strong>ことだから</strong>、また<ruby>寝坊<rt>ねぼう</rt></ruby>したに<ruby>違<rt>ちが</rt></ruby>いない。',
+            plain: '彼のことだから、また寝坊したに違いない。',
+            zh: '以他的個性來說（正因為是他），一定又睡過頭了。',
+          },
+        ],
+      },
+      {
+        id: 45,
+        pattern: 'ことから',
+        reading: 'ことから',
+        titleRuby: 'ことから',
+        meaningZh: '〜因為…、從…這件事來看（判斷、命名或推論的依據）',
+        meaningEn: 'from the fact that... / judging from... (basis for judgment or naming)',
+        connection: '普通形（な形な・である ／ 名詞である）＋ ことから',
+        nuanceNote:
+          '筆記標註「事・原因（判斷原因）」！常用於說明「某個名稱的由來」或「根據某個客觀事實推斷出結論」。',
+        examples: [
+          {
+            jp: '<ruby>形<rt>かたち</rt></ruby>が<ruby>富士山<rt>ふじさん</rt></ruby>に<ruby>似<rt>に</rt></ruby>ている<strong>ことから</strong>、この<ruby>山<rt>やま</rt></ruby>は「〇〇<ruby>富士<rt>ふじ</rt></ruby>」と<ruby>呼<rt>よ</rt></ruby>ばれている。',
+            plain: '形が富士山に似ていることから、この山は「〇〇富士」と呼ばれている。',
+            zh: '因為形狀長得像富士山，這座山被稱為「〇〇富士」。',
+          },
+          {
+            jp: '<ruby>靴<rt>くつ</rt></ruby>がそろえてある<strong>ことから</strong>、<ruby>彼<rt>かれ</rt></ruby>はもう<ruby>帰宅<rt>きたく</rt></ruby>したことが<ruby>分<rt>わ</rt></ruby>かる。',
+            plain: '靴がそろえてあることから、彼はもう帰宅したことが分かる。',
+            zh: '從鞋子擺放整齊這件事來看，可以知道他已經回家了。',
+          },
+        ],
+      },
+      {
+        id: 46,
+        pattern: 'AことはAが',
+        reading: 'AことはAが',
+        titleRuby: 'AことはAが',
+        meaningZh: '〜雖說…但是…（先承認某事實，再轉折提出保留或缺點）',
+        meaningEn: 'it is true that..., but... (concession followed by contrast)',
+        connection: '動詞・い形・な形・名詞（同一詞重複）＋ ことは ＋ 同一詞 ＋ が / けど',
+        nuanceNote:
+          '筆記舉了經典例句「〜ことはおいしいが（好吃是好吃，但…）」！透過重複同一個詞來表達「雖然承認這一點，但還有其他問題或限制」。',
+        examples: [
+          {
+            jp: 'このケーキは<strong>おいしいことはおいしいが</strong>、<ruby>値段<rt>ねだん</rt></ruby>がちょっと<ruby>高<rt>たか</rt></ruby>い。',
+            plain: 'このケーキはおいしいことはおいしいが、値段がちょっと高い。',
+            zh: '這個蛋糕好吃是好吃，但價格有點貴。',
+          },
+          {
+            jp: '<ruby>説明書<rt>せつめいしょ</rt></ruby>を<strong><ruby>読<rt>よ</rt></ruby>んだことは<ruby>読<rt>よ</rt></ruby>んだが</strong>、よく<ruby>分<rt>わ</rt></ruby>からなかった。',
+            plain: '説明書を読んだことは読んだが、よく分からなかった。',
+            zh: '說明書讀是讀過了，但還是不太明白。',
+          },
+        ],
+      },
+      {
+        id: 47,
+        pattern: 'ことだ',
+        reading: 'ことだ',
+        titleRuby: 'ことだ',
+        meaningZh: '〜應該…、最好…（提出忠告或個人建議）',
+        meaningEn: 'should... / ought to... (personal advice or suggestion)',
+        connection: '動詞辞書形・ない形 ＋ ことだ',
+        nuanceNote:
+          '筆記旁寫了「Personal suggestion」！用來向對方提出具體的勸告或建議，語氣比「〜たほうがいい」稍微客觀、帶有教誨或總結經驗的味道。',
+        examples: [
+          {
+            jp: '<ruby>健康<rt>けんこう</rt></ruby>になりたければ、<ruby>毎日<rt>まいにち</rt></ruby><ruby>運動<rt>うんどう</rt></ruby>する<strong>ことだ</strong>。',
+            plain: '健康になりたければ、毎日運動することだ。',
+            zh: '如果想變健康的話，就應該每天運動。',
+          },
+          {
+            jp: '<ruby>試験<rt>しけん</rt></ruby>の<ruby>前日<rt>ぜんじつ</rt></ruby>は、<ruby>夜更<rt>よふ</rt></ruby>かししない<strong>ことだ</strong>。',
+            plain: '試験の前日は、夜更かししないことだ。',
+            zh: '考試前一天最好不要熬夜。',
+          },
+        ],
+      },
+      {
+        id: 48,
+        pattern: 'ことか',
+        reading: 'ことか',
+        titleRuby: 'ことか',
+        meaningZh: '〜多麼…啊！（感嘆程度之深）',
+        meaningEn: 'how...! / what a...! (exclamation of strong emotion)',
+        connection: '疑問詞（どんなに・どれほど・何回等）＋ 普通形（な形な）＋ ことか',
+        nuanceNote:
+          '筆記精準寫出「配疑問副詞（どれだけ）〜啊！」常與「どんなに／どれほど／どれだけ／何度」呼應，表達說話者內心強烈的感嘆。',
+        examples: [
+          {
+            jp: '<ruby>合格<rt>ごうかく</rt></ruby>の<ruby>知<rt>し</rt></ruby>らせを<ruby>聞<rt>き</rt></ruby>いたとき、どれほど<ruby>嬉<rt>うれ</rt></ruby>しかった<strong>ことか</strong>。',
+            plain: '合格の知らせを聞いたとき、どれほど嬉しかったことか。',
+            zh: '聽到及格消息的時候，我是多麼高興啊！',
+          },
+          {
+            jp: 'これまで<ruby>何度<rt>なんど</rt></ruby>やめようと<ruby>思<rt>おも</rt></ruby>った<strong>ことか</strong>。',
+            plain: 'これまで何度やめようと思ったことか。',
+            zh: '至今為止我曾多少次想過要放棄啊！',
+          },
+        ],
+      },
+      {
+        id: 49,
+        pattern: 'ことはない',
+        reading: 'ことはない',
+        titleRuby: 'ことはない',
+        meaningZh: '〜沒必要…、用不著…',
+        meaningEn: 'there is no need to... / do not have to...',
+        connection: '動詞辞書形 ＋ ことはない',
+        nuanceNote:
+          '筆記舉了經典例句「〜心配することはない（用不著擔心）」！表示客觀上沒有必要做某事，常用來安慰或勸阻對方。',
+        examples: [
+          {
+            jp: '<ruby>準備<rt>じゅんび</rt></ruby>はできているから、<ruby>何<rt>なに</rt></ruby>も<ruby>心配<rt>しんぱい</rt></ruby>する<strong>ことはない</strong>よ。',
+            plain: '準備はできているから、何も心配することはないよ。',
+            zh: '準備都做好了，所以什麼都用不著擔心喔。',
+          },
+          {
+            jp: 'まだ<ruby>時間<rt>じかん</rt></ruby>があるから、<ruby>急<rt>いそ</rt></ruby>ぐ<strong>ことはない</strong>。',
+            plain: 'まだ時間があるから、急ぐことはない。',
+            zh: '還有時間，沒必要著急。',
+          },
+        ],
+      },
+      {
+        id: 50,
+        pattern: 'ことになっている',
+        reading: 'ことになっている',
+        titleRuby: 'ことになっている',
+        meaningZh: '〜（規定、制度、預定安排的持續狀態）',
+        meaningEn: 'it is decided / the rule is / it is scheduled that...',
+        connection: '動詞辞書形・ない形 ＋ ことになっている',
+        nuanceNote:
+          '筆記標註「規定・制度・狀態」！與瞬間決定的「ことになった」不同，「ことになっている」強調學校、公司、社會的規則制度或既定行程。',
+        examples: [
+          {
+            jp: 'この<ruby>図書館<rt>としょかん</rt></ruby>では、<ruby>飲食<rt>いんしょく</rt></ruby>してはいけない<strong>ことになっている</strong>。',
+            plain: 'この図書館では、飲食してはいけないことになっている。',
+            zh: '這間圖書館規定禁止飲食。',
+          },
+          {
+            jp: '<ruby>来週<rt>らいしゅう</rt></ruby>から<ruby>東京<rt>とうきょう</rt></ruby>へ<ruby>出張<rt>しゅっちょう</rt></ruby>する<strong>ことになっている</strong>。',
+            plain: '来週から東京へ出張することになっている。',
+            zh: '按計畫下週起要去東京出差。',
+          },
+        ],
+      },
+      {
+        id: 51,
+        pattern: '際 (さい)',
+        reading: 'さい',
+        titleRuby: '<ruby>際<rt>さい</rt></ruby>（に）',
+        meaningZh: '〜的時候（較正式的「とき」）',
+        meaningEn: 'when / on the occasion of... (formal)',
+        connection: '動詞辞書形・た形 ／ 名詞の ＋ 際（に・は）',
+        nuanceNote:
+          '「とき」的正式書面與敬語表達，常用於廣播、公告、說明書或商務禮貌場合（如：お帰りの際は＝您回去的時候）。',
+        examples: [
+          {
+            jp: 'お<ruby>帰<rt>かえ</rt></ruby>りの<strong><ruby>際<rt>さい</rt></ruby>は</strong>、お<ruby>忘<rt>わす</rt></ruby>れ<ruby>物<rt>もの</rt></ruby>のないようご<ruby>注意<rt>ちゅうい</rt></ruby>ください。',
+            plain: 'お帰りの際は、お忘れ物のないようご注意ください。',
+            zh: '您離開的時候，請注意不要遺忘隨身物品。',
+          },
+          {
+            jp: '<ruby>日本<rt>にほん</rt></ruby>へ<ruby>来<rt>き</rt></ruby>た<strong><ruby>際<rt>さい</rt></ruby>に</strong>、<ruby>富士山<rt>ふじさん</rt></ruby>に<ruby>登<rt>のぼ</rt></ruby>りました。',
+            plain: '日本へ来た際に、富士山に登りました。',
+            zh: '來日本的時候，我爬了富士山。',
+          },
+        ],
+      },
+      {
+        id: 52,
+        pattern: '最中 (さいちゅう)',
+        reading: 'さいちゅう',
+        titleRuby: '<ruby>最中<rt>さいちゅう</rt></ruby>（に）',
+        meaningZh: '〜正在進行某事的最高潮時（突然發生意外事件）',
+        meaningEn: 'in the very middle of... (when something unexpected interrupts)',
+        connection: '動詞ている ／ 名詞の ＋ 最中（に・だ）',
+        nuanceNote:
+          '筆記精準總結「正在進行 → 意外」！強調動作正處於最關鍵、最投入的進行當中，此時突然發生干擾或意外（如：開會開到一半停電）。',
+        examples: [
+          {
+            jp: '<ruby>重要<rt>じゅうよう</rt></ruby>な<ruby>会議<rt>かいぎ</rt></ruby>の<strong><ruby>最中<rt>さいちゅう</rt></ruby>に</strong>、<ruby>携帯<rt>けいたい</rt></ruby>が<ruby>鳴<rt>な</rt></ruby>ってしまった。',
+            plain: '重要な会議の最中に、携帯が鳴ってしまった。',
+            zh: '正在開重要會議的時候，手機竟然響了起來。',
+          },
+          {
+            jp: '<ruby>食事<rt>しょくじ</rt></ruby>をしている<strong><ruby>最中<rt>さいちゅう</rt></ruby>に</strong>、<ruby>地震<rt>じしん</rt></ruby>が<ruby>起<rt>お</rt></ruby>きた。',
+            plain: '食事をしている最中に、地震が起きた。',
+            zh: '正在吃飯的時候，發生了地震。',
+          },
+        ],
+      },
+      {
+        id: 53,
+        pattern: 'さえ (すら)',
+        reading: 'さえ / すら',
+        titleRuby: 'さえ（すら）',
+        meaningZh: '〜連…都…（舉出極端例子暗示其他更不用說）',
+        meaningEn: 'even... (extreme example)',
+        connection: '名詞（＋助詞）＋ さえ / すら（〜さえ〜ない）',
+        nuanceNote:
+          '舉出一個最基本或最極端的例子，表示「連這點最起碼的事都（沒）做到，其他的更不用說了」。「すら」語氣更書面。',
+        examples: [
+          {
+            jp: '<ruby>忙<rt>いそが</rt></ruby>しすぎて、<ruby>水<rt>みず</rt></ruby>を<ruby>飲<rt>の</rt></ruby>む<ruby>時間<rt>じかん</rt></ruby><strong>さえ</strong>ない。',
+            plain: '忙しすぎて、水を飲む時間さえない。',
+            zh: '忙得不可開交，連喝水的時間都沒有。',
+          },
+          {
+            jp: 'そんな<ruby>簡単<rt>かんたん</rt></ruby>な<ruby>漢字<rt>かんじ</rt></ruby>は、<ruby>子供<rt>こども</rt></ruby><strong>さえ</strong><ruby>読<rt>よ</rt></ruby>める。',
+            plain: 'そんな簡単な漢字は、子供さえ読める。',
+            zh: '那麼簡單的漢字，連小孩子都看得懂。',
+          },
+        ],
+      },
+      {
+        id: 54,
+        pattern: '〜さえ〜ば',
+        reading: '〜さえ〜ば',
+        titleRuby: '〜さえ〜ば',
+        meaningZh: '〜只要…就…（唯一必要條件）',
+        meaningEn: 'if only... / as long as... (sole necessary condition)',
+        connection: '名詞＋さえ＋動詞ば形・い形ければ ／ 動詞ます形＋さえすれば',
+        nuanceNote:
+          '表示「別的條件都不管，只要滿足這唯一一個條件，問題就能解決或事情就能成立」。',
+        examples: [
+          {
+            jp: '<ruby>体<rt>からだ</rt></ruby><strong>さえ</strong><ruby>元気<rt>げんき</rt></ruby><strong>なら</strong>、<ruby>何<rt>なに</rt></ruby>でもできる。',
+            plain: '体さえ元気なら、何でもできる。',
+            zh: '只要身體健康，什麼事都做得到。',
+          },
+          {
+            jp: 'このボタンを<ruby>押<rt>お</rt></ruby>し<strong>さえすれば</strong>、<ruby>機械<rt>きかい</rt></ruby>が<ruby>動<rt>うご</rt></ruby>きます。',
+            plain: 'このボタンを押しさえすれば、機械が動きます。',
+            zh: '只要按下這個按鈕，機器就會運作。',
+          },
+        ],
+      },
+      {
+        id: 55,
+        pattern: 'ざるをえない',
+        reading: 'ざるをえない',
+        titleRuby: 'ざるを<ruby>得<rt>え</rt></ruby>ない',
+        meaningZh: '〜不得不…、必須…（雖然不情願但別無選擇）',
+        meaningEn: 'cannot help doing / have no choice but to... (reluctantly)',
+        connection: '動詞ない形（去掉ない）＋ ざるをえない（⚠️ する → せざるをえない）',
+        nuanceNote:
+          '筆記特別拆解「ざる＝古語作否定、接續；えない＝得ない」！表示雖然內心不太願意，但受限於客觀情勢或規定，不得不這麼做。注意「する」要變成「せざるをえない」。',
+        examples: [
+          {
+            jp: '<ruby>台風<rt>たいふう</rt></ruby>が<ruby>近<rt>ちか</rt></ruby>づいているので、<ruby>旅行<rt>りょこう</rt></ruby>は<ruby>中止<rt>ちゅうし</rt></ruby><strong>せざるをえない</strong>。',
+            plain: '台風が近づいているので、旅行は中止せざるをえない。',
+            zh: '因為颱風正在逼近，旅行不得不取消。',
+          },
+          {
+            jp: 'ほかに<ruby>方法<rt>ほうほう</rt></ruby>がないので、<ruby>彼<rt>かれ</rt></ruby>の<ruby>提案<rt>ていあん</rt></ruby>に<ruby>賛成<rt>さんせい</rt></ruby>し<strong>ざるをえなかった</strong>。',
+            plain: 'ほかに方法がないので、彼の提案に賛成せざるをえなかった。',
+            zh: '因為沒有其他辦法，只好贊成他的提案了。',
+          },
+        ],
+      },
+      {
+        id: 56,
+        pattern: '次第 (しだい)',
+        reading: 'しだい',
+        titleRuby: '<ruby>次第<rt>しだい</rt></ruby>',
+        meaningZh: '① 一…就…（先後順序）　② 根據、取決於…★　③ 所以（說明緣由）',
+        meaningEn: '① as soon as... ② depending on... ③ therefore (formal reason)',
+        connection: '① 動詞ます形＋次第　② 名詞＋次第だ・次第で　③ 普通形＋次第だ',
+        nuanceNote:
+          '筆記把三大意思都整理出來了！①「動詞ます形＋次第」表「一完成A就立刻做B」；②「名詞＋次第」表「全憑…決定」（如：努力次第）；另外筆記旁補充副詞「次第に＝漸漸」。',
+        examples: [
+          {
+            jp: '<ruby>空港<rt>くうこう</rt></ruby>に<ruby>到着<rt>とうちゃく</rt></ruby>し<strong><ruby>次第<rt>しだい</rt></ruby></strong>、すぐにご<ruby>連絡<rt>れんらく</rt></ruby>します。',
+            plain: '空港に到着し次第、すぐにご連絡します。',
+            zh: '一抵達機場，我就會立刻跟您聯絡。',
+          },
+          {
+            jp: '<ruby>試験<rt>しけん</rt></ruby>に<ruby>受<rt>う</rt></ruby>かるかどうかは、あなたの<ruby>努力<rt>どりょく</rt></ruby><strong><ruby>次第<rt>しだい</rt></ruby>だ</strong>。',
+            plain: '試験に受かるかどうかは、あなたの努力次第だ。',
+            zh: '能不能考上試，全看你的努力而定。',
+          },
+        ],
+      },
+      {
+        id: 57,
+        pattern: 'じょう (上)',
+        reading: 'じょう',
+        titleRuby: '〜<ruby>上<rt>じょう</rt></ruby>',
+        meaningZh: '〜在…上（接漢語名詞，限定領域或立場）',
+        meaningEn: 'from the standpoint of / in terms of... (attaches to Sino-Japanese nouns)',
+        connection: '名詞（主要是二字漢語名詞：歴史・健康・法律・仕事等）＋ 上（じょう・の・は・も）',
+        nuanceNote:
+          '筆記精準標註「接漢名詞」！例如：健康上（健康方面）、法律上（法律上）、歴史上（歷史上）、仕事上（工作上）。',
+        examples: [
+          {
+            jp: '<ruby>健康<rt>けんこう</rt></ruby><strong><ruby>上<rt>じょう</rt></ruby></strong>の<ruby>理由<rt>りゆう</rt></ruby>で、お<ruby>酒<rt>さけ</rt></ruby>をやめることにした。',
+            plain: '健康上の理由で、お酒をやめることにした。',
+            zh: '基於健康上的理由，決定戒酒了。',
+          },
+          {
+            jp: '<ruby>法律<rt>ほうりつ</rt></ruby><strong><ruby>上<rt>じょう</rt></ruby>は</strong><ruby>問題<rt>もんだい</rt></ruby>がないが、マナーとしてはよくない。',
+            plain: '法律上は問題がないが、マナーとしてはよくない。',
+            zh: '在法律上雖然沒有問題，但作為禮貌而言並不好。',
+          },
+        ],
+      },
+      {
+        id: 58,
+        pattern: '末 (すえ)',
+        reading: 'すえ',
+        titleRuby: '<ruby>末<rt>すえ</rt></ruby>（に）',
+        meaningZh: '〜經過……結果（長時間辛苦或糾結後的最終結果）',
+        meaningEn: 'after a long process of... / following...',
+        connection: '動詞た形 ／ 名詞の ＋ 末（に・の）',
+        nuanceNote:
+          '與第 1 條「あげく」類似，都表示長時間經過後的結果；但「末に」可用於正面好結果（如：經過多年研究終於成功）也可用於負面結果，語氣較書面。',
+        examples: [
+          {
+            jp: '<ruby>長年<rt>ながねん</rt></ruby>の<ruby>研究<rt>けんきゅう</rt></ruby>の<strong><ruby>末<rt>すえ</rt></ruby>に</strong>、<ruby>新<rt>あたら</rt></ruby>しい<ruby>薬<rt>くすり</rt></ruby>が<ruby>開発<rt>かいはつ</rt></ruby>された。',
+            plain: '長年の研究の末に、新しい薬が開発された。',
+            zh: '經過多年的研究之後，終於開發出了新藥。',
+          },
+          {
+            jp: 'いろいろ<ruby>考<rt>かんが</rt></ruby>えた<strong><ruby>末<rt>すえ</rt></ruby></strong>、<ruby>留学<rt>りゅうがく</rt></ruby>することを<ruby>決<rt>き</rt></ruby>めた。',
+            plain: 'いろいろ考えた末、留学することを決めた。',
+            zh: '經過多方思考的結果，決定去留學了。',
+          },
+        ],
+      },
+      {
+        id: 59,
+        pattern: 'ずに(は)いられない',
+        reading: 'ずに(は)いられない',
+        titleRuby: 'ずに（は）いられない',
+        meaningZh: '〜不由得…、不禁…（情感或生理上控制不住）',
+        meaningEn: 'cannot help doing... / cannot resist doing...',
+        connection: '動詞ない形（去掉ない）＋ ずに（は）いられない（⚠️ する → せずにはいられない）',
+        nuanceNote:
+          '筆記標註「ずに＝否定、は＝強調、いられない＝不能夠」！表示內心情感自然湧現或生理反應讓人忍不住做出某動作（如：忍不住笑出來、不禁擔心）。',
+        examples: [
+          {
+            jp: 'その<ruby>映画<rt>えいが</rt></ruby>を<ruby>見<rt>み</rt></ruby>て、<ruby>涙<rt>なみだ</rt></ruby>を<ruby>流<rt>なが</rt></ruby>さ<strong>ずにはいられなかった</strong>。',
+            plain: 'その映画を見て、涙を流さずにはいられなかった。',
+            zh: '看了那部電影，讓人不由得流下眼淚。',
+          },
+          {
+            jp: 'あまりにもおかしくて、<ruby>笑<rt>わら</rt></ruby>わ<strong>ずにはいられない</strong>。',
+            plain: 'あまりにもおかしくて、笑わずにはいられない。',
+            zh: '實在太好笑了，讓人忍不住笑出來。',
+          },
+        ],
+      },
+      {
+        id: 60,
+        pattern: 'ずにすむ',
+        reading: 'ずにすむ',
+        titleRuby: 'ずに<ruby>済<rt>す</rt></ruby>む',
+        meaningZh: '〜不用…就解決了（省去原本擔心的麻煩或開銷）',
+        meaningEn: 'get by without doing... / avoid having to...',
+        connection: '動詞ない形（去掉ない）＋ ずにすむ（口語：ないですむ）',
+        nuanceNote:
+          '筆記標註「ずに＝否定、すむ＝済・結束」，並寫了口語形「ないですむ」！表示「本來以為必須要做某件麻煩事，結果沒做也順利解決了」。',
+        examples: [
+          {
+            jp: '<ruby>傘<rt>かさ</rt></ruby>を<ruby>持<rt>も</rt></ruby>っていたので、<ruby>雨<rt>あめ</rt></ruby>に<ruby>濡<rt>ぬ</rt></ruby>れ<strong>ずにすんだ</strong>。',
+            plain: '傘を持っていたので、雨に濡れずにすんだ。',
+            zh: '因為帶了傘，所以沒有淋到雨就解決了。',
+          },
+          {
+            jp: '<ruby>軽<rt>かる</rt></ruby>いケガだったので、<ruby>入院<rt>にゅういん</rt></ruby>せ<strong>ずにすみました</strong>。',
+            plain: '軽いケガだったので、入院せずにすみました。',
+            zh: '因為只是輕傷，所以不用住院就沒事了。',
+          },
+        ],
+      },
+      {
+        id: 61,
+        pattern: 'だけ',
+        reading: 'だけ',
+        titleRuby: 'だけ',
+        meaningZh: '〜（做到極限）盡量…、能…多少就…多少',
+        meaningEn: 'as much as... / to the full extent of...',
+        connection: '動詞辞書形・た形・可能形 ／ い形・な形な ＋ だけ',
+        nuanceNote:
+          '筆記舉例「できるだけ（能做都做／盡量）」！常與可能形連用（如：食べたいだけ食べる＝想吃多少就吃多少、できるだけのことはした＝能做的都做了）。',
+        examples: [
+          {
+            jp: 'バイキングだから、<ruby>好<rt>す</rt></ruby>きな<strong>だけ</strong><ruby>食<rt>た</rt></ruby>べていいよ。',
+            plain: 'バイキングだから、好きなだけ食べていいよ。',
+            zh: '因為是自助餐，喜歡吃多少就可以吃多少喔。',
+          },
+          {
+            jp: 'できる<strong>だけ</strong><ruby>早<rt>はや</rt></ruby>く<ruby>返信<rt>へんしん</rt></ruby>してください。',
+            plain: 'できるだけ早く返信してください。',
+            zh: '請盡量早點回覆。',
+          },
+        ],
+      },
+      {
+        id: 62,
+        pattern: 'だけに / だけあって',
+        reading: 'だけに / だけあって',
+        titleRuby: 'だけに / だけあって',
+        meaningZh: 'a 不愧是…（高度評價）　b 正因為…反而更…',
+        meaningEn: 'a as expected of... (praise) b precisely because... (all the more)',
+        connection: '普通形（な形な・である ／ 名詞・名詞である）＋ だけに / だけあって',
+        nuanceNote:
+          '筆記清楚分出 a、b 兩類：①「だけあって／だけに」＝「不愧是…，果然名不虛傳（高度評價）」；②「だけに」＝「正因為期待高／條件好，一旦失敗反而打擊更大」。',
+        examples: [
+          {
+            jp: 'さすが<ruby>一流<rt>いちりゅう</rt></ruby>ホテル<strong>だけあって</strong>、サービスが<ruby>素晴<rt>すば</rt></ruby>らしい。',
+            plain: 'さすが一流ホテルだけあって、サービスが素晴らしい。',
+            zh: '真不愧是一流飯店，服務非常出色。',
+          },
+          {
+            jp: '<ruby>期待<rt>きたい</rt></ruby>していた<strong>だけに</strong>、<ruby>不合格<rt>ふごうかく</rt></ruby>だったときはとても<ruby>落<rt>お</rt></ruby>ち<ruby>込<rt>こ</rt></ruby>んだ。',
+            plain: '期待していただけにご、不合格だったときはとても落ち込んだ。'.replace('だけにご', 'だけに'),
+            zh: '正因為原本抱有高度期待，沒考上時反而更加失落。',
+          },
+        ],
+      },
+      {
+        id: 63,
+        pattern: 'たとえ〜ても',
+        reading: 'たとえ〜ても',
+        titleRuby: 'たとえ〜ても',
+        meaningZh: '〜即使…也…（假設極端條件）',
+        meaningEn: 'even if... / no matter how... (hypothetical)',
+        connection: 'たとえ ＋ 動詞て形・い形くて・な形でも・名詞でも',
+        nuanceNote:
+          '句首加上副詞「たとえ」與句中的「〜ても／〜でも」呼應，強調「就算退一萬步假設發生某種極端情況，結果或決心也絕不改變」。',
+        examples: [
+          {
+            jp: '<strong>たとえ</strong><ruby>失敗<rt>しっぱい</rt></ruby>し<strong>ても</strong>、<ruby>後悔<rt>こうかい</rt></ruby>はしません。',
+            plain: 'たとえ失敗しても、後悔はしません。',
+            zh: '即使失敗了，我也不會後悔。',
+          },
+          {
+            jp: '<strong>たとえ</strong><ruby>反対<rt>はんたい</rt></ruby>され<strong>ても</strong>、<ruby>自分<rt>じぶん</rt></ruby>の<ruby>夢<rt>ゆめ</rt></ruby>を<ruby>追<rt>お</rt></ruby>いかけたい。',
+            plain: 'たとえ反対されても、自分の夢を追いかけたい。',
+            zh: '即使遭到反對，我也想追逐自己的夢想。',
+          },
+        ],
+      },
+      {
+        id: 64,
+        pattern: '〜たところ',
+        reading: '〜たところ',
+        titleRuby: '〜たところ',
+        meaningZh: '〜之後（發現了意外的結果或新情況）',
+        meaningEn: 'when I did... (I discovered an unexpected result)',
+        connection: '動詞た形 ＋ ところ',
+        nuanceNote:
+          '筆記精準點出「た＝PAST 事・結果 → 之後（意外）」！表示實際去做了某動作（如打電話、調查、試吃）之後，發現了出乎意料的結果。注意區分「〜たところで（即使是…也沒用）」。',
+        examples: [
+          {
+            jp: '<ruby>先生<rt>せんせい</rt></ruby>に<ruby>相談<rt>そうだん</rt></ruby>し<strong>たところ</strong>、いいアドバイスをくれた。',
+            plain: '先生に相談したところ、いいアドバイスをくれた。',
+            zh: '跟老師商量之後，老師給了我很好的建議。',
+          },
+          {
+            jp: '<ruby>駅<rt>えき</rt></ruby>に<ruby>問<rt>と</rt></ruby>い<ruby>合<rt>あ</rt></ruby>わせ<strong>たところ</strong>、<ruby>忘<rt>わす</rt></ruby>れ<ruby>物<rt>もの</rt></ruby>が<ruby>見<rt>み</rt></ruby>つかった。',
+            plain: '駅に問い合わせたところ、忘れ物が見つかった。',
+            zh: '向車站詢問之後，遺失物找到了。',
+          },
+        ],
+      },
+      {
+        id: 65,
+        pattern: 'たとたん',
+        reading: 'たとたん',
+        titleRuby: 'たとたん（に）',
+        meaningZh: '〜剛一……就（緊接著發生意外變化）',
+        meaningEn: 'just as / the moment... (sudden unexpected event)',
+        connection: '動詞た形 ＋ とたん（に）',
+        nuanceNote:
+          '強調動作 A 剛完成的瞬間，緊接著發生了非意志性的意外事件 B（如：剛站起來就頭暈、剛出門就下雨）。後項不能是說話者自己的意志動作。',
+        examples: [
+          {
+            jp: '<ruby>家<rt>いえ</rt></ruby>を<ruby>出<rt>で</rt></ruby><strong>たとたん</strong>、<ruby>雨<rt>あめ</rt></ruby>が<ruby>降<rt>ふ</rt></ruby>り<ruby>出<rt>だ</rt></ruby>した。',
+            plain: '家を出たとたん、雨が降り出した。',
+            zh: '剛一踏出家門，就下起雨來了。',
+          },
+          {
+            jp: '<ruby>立<rt>た</rt></ruby>ち<ruby>上<rt>あ</rt></ruby>がっ<strong>たとたんに</strong>、めまいがした。',
+            plain: '立ち上がったとたんに、めまいがした。',
+            zh: '剛一站起來，就感到一陣頭暈。',
+          },
+        ],
+      },
+      {
+        id: 66,
+        pattern: 'たびに (度に)',
+        reading: 'たびに',
+        titleRuby: 'たびに（<ruby>度<rt>たび</rt></ruby>に）',
+        meaningZh: '〜每當…就…（每次重複發生同樣的事）',
+        meaningEn: 'whenever / every time...',
+        connection: '動詞辞書形 ／ 名詞の ＋ たびに',
+        nuanceNote:
+          '筆記旁寫了超可愛的聯想記憶：「〜たび 旅 → 旅遊相（每次看到旅遊照片就想起那段回憶）」！表示「每當發生 A 的時候，總是伴隨發生 B」。',
+        examples: [
+          {
+            jp: 'この<ruby>写真<rt>しゃしん</rt></ruby>を<ruby>見<rt>み</rt></ruby>る<strong>たびに</strong>、<ruby>大学時代<rt>だいがくじだい</rt></ruby>を<ruby>思<rt>おも</rt></ruby>い<ruby>出<rt>だ</rt></ruby>す。',
+            plain: 'この写真を見るたびに、大学時代を思い出す。',
+            zh: '每當看到這張照片，就會想起大學時代。',
+          },
+          {
+            jp: '<ruby>彼<rt>かれ</rt></ruby>は<ruby>会<rt>あ</rt></ruby>う<strong>たびに</strong>、背が<ruby>高<rt>たか</rt></ruby>くなっている。',
+            plain: '彼は会うたびに、背が高くなっている。',
+            zh: '他每次見面都長高了不少。',
+          },
+        ],
+      },
+      {
+        id: 67,
+        pattern: 'だらけ',
+        reading: 'だらけ',
+        titleRuby: 'だらけ',
+        meaningZh: '〜滿是…、淨是…（多用於負面、髒亂或錯誤的事物）',
+        meaningEn: 'covered in / full of... (almost always negative)',
+        connection: '名詞 ＋ だらけ（だ・の・に）',
+        nuanceNote:
+          '筆記標註「(-ve)」並舉了經典例詞「血（ち）だらけ（滿身是血）」！常用於負面、令人不快的事物（如：間違いだらけ＝錯誤百出、ホコリだらけ＝滿是灰塵、借金だらけ＝債台高築）。',
+        examples: [
+          {
+            jp: '<ruby>彼<rt>かれ</rt></ruby>の<ruby>作文<rt>さくぶん</rt></ruby>は<ruby>漢字<rt>かんじ</rt></ruby>の<ruby>間違<rt>まちが</rt></ruby>い<strong>だらけ</strong>だ。',
+            plain: '彼の作文は漢字の間違いだらけだ。',
+            zh: '他的作文裡滿是漢字錯誤。',
+          },
+          {
+            jp: '<ruby>転<rt>ころ</rt></ruby>んで、<ruby>服<rt>ふく</rt></ruby>が<ruby>泥<rt>どろ</rt></ruby><strong>だらけ</strong>になってしまった。',
+            plain: '転んで、服が泥だらけになってしまった。',
+            zh: '跌了一跤，衣服變得滿是泥巴。',
+          },
+        ],
+      },
+      {
+        id: 68,
+        pattern: 'ついでに',
+        reading: 'ついでに',
+        titleRuby: 'ついでに',
+        meaningZh: '順便〜（趁著做主要事情的時候順便做另一件事）',
+        meaningEn: 'while you are at it / on the way / incidentally...',
+        connection: '動詞辞書形・た形 ／ 名詞の ＋ ついでに',
+        nuanceNote:
+          '表示在進行某個主要行動時，利用同一個機會或路線「順便」完成另一件次要的事情。',
+        examples: [
+          {
+            jp: '<ruby>銀行<rt>ぎんこう</rt></ruby>へ<ruby>行<rt>い</rt></ruby>く<strong>ついでに</strong>、この<ruby>手紙<rt>てがみ</rt></ruby>を<ruby>出<rt>だ</rt></ruby>してきてくれませんか。',
+            plain: '銀行へ行くついでに、この手紙を出してきてくれませんか。',
+            zh: '去銀行的時候，能不能順便幫我把這封信寄出去？',
+          },
+          {
+            jp: '<ruby>散歩<rt>さんぽ</rt></ruby>の<strong>ついでに</strong>、コンビニで<ruby>牛乳<rt>ぎゅうにゅう</rt></ruby>を<ruby>買<rt>か</rt></ruby>った。',
+            plain: '散歩のついでに、コンビニで牛乳を買った。',
+            zh: '散步的時候順便在便利商店買了牛奶。',
+          },
+        ],
+      },
+      {
+        id: 69,
+        pattern: 'っけ',
+        reading: 'っけ',
+        titleRuby: 'っけ',
+        meaningZh: '〜對吧？／〜來著？（向對方確認記憶，或自言自語回想）',
+        meaningEn: 'was it...? / let me confirm... (confirming memory)',
+        connection: '普通形（名詞・な形は「だ」或「だった」可省略）＋ っけ',
+        nuanceNote:
+          '筆記寫了「〜對吧 (confirm)」！口語極常用，用於確認自己記不太清楚的事情（如：明日の会議は何時からだっけ？＝明天的會議是幾點開始來著？）。',
+        examples: [
+          {
+            jp: '<ruby>明日<rt>あした</rt></ruby>の<ruby>会議<rt>かいぎ</rt></ruby>は、<ruby>何時<rt>なんじ</rt></ruby>からだった<strong>っけ</strong>。',
+            plain: '明日の会議は、何時からだったっけ。',
+            zh: '明天的會議是幾點開始來著？',
+          },
+          {
+            jp: '<ruby>彼<rt>かれ</rt></ruby>の<ruby>誕生日<rt>たんじょうび</rt></ruby>は<ruby>来月<rt>らいげつ</rt></ruby>の5<ruby>日<rt>にち</rt></ruby>だった<strong>っけ</strong>？',
+            plain: '彼の誕生日は来月の5日だったっけ？',
+            zh: '他的生日是下個月5號對吧？',
+          },
+        ],
+      },
+      {
+        id: 70,
+        pattern: 'っこない',
+        reading: 'っこない',
+        titleRuby: 'っこない',
+        meaningZh: '〜不可能、絕對不會…（口語強烈否定可能性）',
+        meaningEn: 'no way / definitely will not... (colloquial strong denial)',
+        connection: '動詞ます形（去掉ます）＋ っこない',
+        nuanceNote:
+          '口語表現，語氣強烈地斷言「絕對不可能發生／絕對做不到」（如：間に合いっこない＝絕對來不及、できっこない＝根本不可能做到）。',
+        examples: [
+          {
+            jp: 'こんなにたくさんの<ruby>宿題<rt>しゅくだい</rt></ruby>、1<ruby>時間<rt>じかん</rt></ruby>で<ruby>終<rt>お</rt></ruby>わり<strong>っこない</strong>。',
+            plain: 'こんなにたくさんの宿題、1時間で終わりっこない。',
+            zh: '這麼多作業，1個小時根本不可能寫得完。',
+          },
+          {
+            jp: '<ruby>練習<rt>れんしゅう</rt></ruby>もしないで、<ruby>試合<rt>しあい</rt></ruby>に<ruby>勝<rt>か</rt></ruby>て<strong>っこない</strong>よ。',
+            plain: '練習もしないで、試合に勝てっこないよ。',
+            zh: '連練習都不練，比賽根本不可能贏的啦。',
+          },
+        ],
+      },
+      {
+        id: 71,
+        pattern: 'つつ (a: 一邊…一邊 / b: 雖然…但是)',
+        reading: 'つつ / つつも',
+        titleRuby: 'つつ（つつも）',
+        meaningZh: 'a：一邊〜一邊（＝ながら）　b：雖然〜但是（＝ながらも）',
+        meaningEn: 'a while doing... b although / even though... (つつも)',
+        connection: '動詞ます形（去掉ます）＋ つつ / つつも',
+        nuanceNote:
+          '筆記對照「ながら（も）」並分成 a、b 兩項：a 表兩個動作同時進行（偏書面）；b「〜つつ（も）」表「心裡雖然知道不該這樣，但實際行動卻還是做了」（如：知道對身體不好卻還是抽菸）。',
+        examples: [
+          {
+            jp: '<ruby>体<rt>からだ</rt></ruby>に<ruby>悪<rt>わる</rt></ruby>いと<ruby>知<rt>し</rt></ruby>り<strong>つつも</strong>、タバコがやめられない。',
+            plain: '体に悪いと知りつつも、タバコがやめられない。',
+            zh: '雖然明知道對身體不好，卻還是戒不掉菸。',
+          },
+          {
+            jp: '<ruby>将来<rt>しょうらい</rt></ruby>のことを<ruby>考<rt>かんが</rt></ruby>え<strong>つつ</strong>、<ruby>進路<rt>しんろ</rt></ruby>を<ruby>決<rt>き</rt></ruby>めたい。',
+            plain: '将来のことを考えつつ、進路を決めたい。',
+            zh: '我想一邊思考未來的事，一邊決定升學出路。',
+          },
+        ],
+      },
+      {
+        id: 72,
+        pattern: 'つつある',
+        reading: 'つつある',
+        titleRuby: 'つつある',
+        meaningZh: '〜正在不斷…、正在逐漸…（變化的進行）',
+        meaningEn: 'in the process of... / gradually becoming...',
+        connection: '動詞ます形（去掉ます・多為變化動詞）＋ つつある',
+        nuanceNote:
+          '書面語氣較重，強調某種趨勢或變化「正在持續推進中」（如：回復しつつある＝正在逐漸康復、減少しつつある＝正在不斷減少）。',
+        examples: [
+          {
+            jp: '<ruby>最近<rt>さいきん</rt></ruby>、<ruby>環境問題<rt>かんきょうもんだい</rt></ruby>への<ruby>関心<rt>かんしん</rt></ruby>が<ruby>高<rt>たか</rt></ruby>まり<strong>つつある</strong>。',
+            plain: '最近、環境問題への関心が高まりつつある。',
+            zh: '最近，人們對環境問題的關注正在不斷提高。',
+          },
+          {
+            jp: '<ruby>季節<rt>きせつ</rt></ruby>は<ruby>春<rt>はる</rt></ruby>から<ruby>夏<rt>なつ</rt></ruby>へと<ruby>変<rt>か</rt></ruby>わり<strong>つつある</strong>。',
+            plain: '季節は春から夏へと変わりつつある。',
+            zh: '季節正在從春天逐漸轉變為夏天。',
+          },
+        ],
+      },
+      {
+        id: 73,
+        pattern: 'っぽい',
+        reading: 'っぽい',
+        titleRuby: 'っぽい',
+        meaningZh: '1. 容易…　2. 有…傾向／感覺　3. 看似像…（帶有某種氣質）',
+        meaningEn: '1. easily... 2. -ish / tending to 3. seeming like...',
+        connection: '名詞 ／ 動詞ます形（去掉ます）／ い形（去い）＋ っぽい',
+        nuanceNote:
+          '筆記舉了三個超經典例詞：忘れっぽい（容易忘記・健忘）、白っぽい（偏白色的）、子供っぽい（孩子氣・像小孩子一樣）！詞性變化與い形容詞相同。',
+        examples: [
+          {
+            jp: '<ruby>年<rt>とし</rt></ruby>をとって、<ruby>最近<rt>さいきん</rt></ruby>とても<ruby>忘<rt>わす</rt></ruby>れ<strong>っぽく</strong>なった。',
+            plain: '年をとって、最近とても忘れっぽくなった。',
+            zh: '上了年紀之後，最近變得很健忘。',
+          },
+          {
+            jp: '<ruby>彼<rt>かれ</rt></ruby>はもう<ruby>二十歳<rt>はたち</rt></ruby>なのに、まだ<ruby>子供<rt>こども</rt></ruby><strong>っぽい</strong>ところがある。',
+            plain: '彼はもう二十歳なのに、まだ子供っぽいところがある。',
+            zh: '他都已經二十歲了，卻還有點孩子氣的地方。',
+          },
+        ],
+      },
+      {
+        id: 74,
+        pattern: 'て以来',
+        reading: 'ていらい',
+        titleRuby: 'て<ruby>以来<rt>いらい</rt></ruby>',
+        meaningZh: '〜自從…以來（某狀態一直持續至今）',
+        meaningEn: 'since doing... (continuing state up to now)',
+        connection: '動詞て形 ＋ 以来',
+        nuanceNote:
+          '表示「自從過去發生某動作之後，某種狀態或習慣就一直持續到現在」。注意前項只能接一次性的動作，不能接持續狀態。',
+        examples: [
+          {
+            jp: '<ruby>日本<rt>にほん</rt></ruby>に<ruby>来<rt>き</rt></ruby><strong>て<ruby>以来<rt>いらい</rt></ruby></strong>、<ruby>毎日<rt>まいにち</rt></ruby>が<ruby>とても<rt></rt></ruby><ruby>充実<rt>じゅうじつ</rt></ruby>している。',
+            plain: '日本に来て以来、毎日がとても充実している。',
+            zh: '自從來到日本以來，每天都過得非常充實。',
+          },
+          {
+            jp: '<ruby>卒業<rt>そつぎょう</rt></ruby>し<strong>て<ruby>以来<rt>いらい</rt></ruby></strong>、<ruby>彼<rt>かれ</rt></ruby>とは<ruby>一度<rt>いちど</rt></ruby>も<ruby>会<rt>あ</rt></ruby>っていない。',
+            plain: '卒業して以来、彼とは一度も会っていない。',
+            zh: '自從畢業以來，就再也沒有見過他了。',
+          },
+        ],
+      },
+      {
+        id: 75,
+        pattern: 'てからでないと',
+        reading: 'てからでないと',
+        titleRuby: 'てからでないと',
+        meaningZh: '〜如果不先…就不…（先決條件）',
+        meaningEn: 'unless... first, cannot... / only after doing...',
+        connection: '動詞て形 ＋ からでないと / からでなければ',
+        nuanceNote:
+          '筆記清楚標出「てから＝先後、でないと＝如不…」！強調必須先完成前項的步驟或條件，否則後項就無法成立（後項多為否定或困難表現）。',
+        examples: [
+          {
+            jp: '<ruby>親<rt>おや</rt></ruby>に<ruby>相談<rt>そうだん</rt></ruby>し<strong>てからでないと</strong>、<ruby>決<rt>き</rt></ruby>められません。',
+            plain: '親に相談してからでないと、決められません。',
+            zh: '如果不先跟父母商量的話，我沒辦法做決定。',
+          },
+          {
+            jp: '<ruby>実際<rt>じっさい</rt></ruby>に<ruby>使<rt>つか</rt></ruby>ってみ<strong>てからでないと</strong>、<ruby>良<rt>よ</rt></ruby>さは<ruby>分<rt>わ</rt></ruby>からない。',
+            plain: '実際に使ってみてからでないと、良さは分からない。',
+            zh: '如果不先實際用用看的話，是不知道好壞的。',
+          },
+        ],
+      },
+      {
+        id: 76,
+        pattern: 'てしょうがない',
+        reading: 'てしょうがない',
+        titleRuby: 'てしょうがない（てしようがない）',
+        meaningZh: '〜非常…、…得不得了（情感或感覺強烈到沒辦法）',
+        meaningEn: 'unbearably... / extremely... (cannot help feeling)',
+        connection: 'い形くて・な形で・動詞て形（感情・感覚・願望）＋ しょうがない / しようがない',
+        nuanceNote:
+          '筆記標註「＝しょうがない 沒辦法 → 非常」！口語常用，表示某種情感或身體感覺（如：寂しい、眠い、嬉しい、気になる）強烈到自己都控制不住。',
+        examples: [
+          {
+            jp: '<ruby>国<rt>くに</rt></ruby>の<ruby>家族<rt>かぞく</rt></ruby>に<ruby>会<rt>あ</rt></ruby>いたく<strong>てしょうがない</strong>。',
+            plain: '国の家族に会いたくてしょうがない。',
+            zh: '非常想見家鄉的家人（想得不得了）。',
+          },
+          {
+            jp: '<ruby>試験<rt>しけん</rt></ruby>の<ruby>結果<rt>けっか</rt></ruby>が<ruby>気<rt>き</rt></ruby>になっ<strong>てしょうがない</strong>。',
+            plain: '試験の結果が気になってしょうがない。',
+            zh: '非常在意考試的結果（在意得不得了）。',
+          },
+        ],
+      },
+      {
+        id: 77,
+        pattern: 'てならない',
+        reading: 'てならない',
+        titleRuby: 'てならない',
+        meaningZh: '〜不由得…、非常…（自然湧現的強烈情感）',
+        meaningEn: 'cannot help feeling... / irresistibly...',
+        connection: 'い形くて・な形で・動詞て形（感情・思考動詞）＋ ならない',
+        nuanceNote:
+          '語氣比「てしょうがない」稍微書面一點，強調內心自然湧現的強烈情緒（如：残念でならない＝感到非常遺憾、不思議でならない＝覺得非常不可思議）。',
+        examples: [
+          {
+            jp: '<ruby>一人<rt>ひとり</rt></ruby>で<ruby>暮<rt>く</rt></ruby>らす<ruby>祖母<rt>そぼ</rt></ruby>のことが<ruby>心配<rt>しんぱい</rt></ruby><strong>でならない</strong>。',
+            plain: '一人で暮らす祖母のことが心配でならない。',
+            zh: '我非常擔心獨自生活的祖母。',
+          },
+          {
+            jp: 'なぜ<ruby>彼<rt>かれ</rt></ruby>がそんなことをしたのか、<ruby>不思議<rt>ふしぎ</rt></ruby><strong>でならない</strong>。',
+            plain: 'なぜ彼がそんなことをしたのか、不思議でならない。',
+            zh: '他為什麼會做出那種事，實在令人覺得不可思議。',
+          },
+        ],
+      },
+      {
+        id: 78,
+        pattern: 'てたまらない',
+        reading: 'てたまらない',
+        titleRuby: 'てたまらない（て<ruby>堪<rt>たま</rt></ruby>らない）',
+        meaningZh: '〜得受不了、非常…（身體感覺或渴望達到極限）',
+        meaningEn: 'unbearably... / dying to...',
+        connection: 'い形くて・な形で・動詞て形（感覚・感情・〜たい）＋ たまらない',
+        nuanceNote:
+          '漢字寫作「堪らない（受不了）」！與 76、77 同為「程度極高」系列，特別常用於生理感覺（如：喉が渇いてたまらない＝渴得受不了、眠くてたまらない＝睏得受不了）。',
+        examples: [
+          {
+            jp: '<ruby>走<rt>はし</rt></ruby>ったあとで、<ruby>喉<rt>のど</rt></ruby>が<ruby>渇<rt>かわ</rt></ruby>い<strong>てたまらない</strong>。',
+            plain: '走ったあとで、喉が渇いてたまらない。',
+            zh: '跑完步之後，口渴得受不了。',
+          },
+          {
+            jp: '<ruby>歯<rt>は</rt></ruby>が痛く<strong>てたまらない</strong>ので、<ruby>歯医者<rt>はいしゃ</rt></ruby>に<ruby>行<rt>い</rt></ruby>きます。',
+            plain: '歯が痛くてたまらないので、歯医者に行きます。',
+            zh: '牙齒痛得受不了，所以我要去看牙醫。',
+          },
+        ],
+      },
+      {
+        id: 79,
+        pattern: 'てでも',
+        reading: 'てでも',
+        titleRuby: 'てでも',
+        meaningZh: '〜就算…也要…（不惜採取極端手段也要達成目的）',
+        meaningEn: 'even if I have to... / by any means...',
+        connection: '動詞て形 ＋ でも',
+        nuanceNote:
+          '筆記精準拆解「て＝手段、でも＝即使」！表示為了達成某個強烈願望或目標，就算要付出代價或採取非常手段也在所不惜。',
+        examples: [
+          {
+            jp: '<ruby>借金<rt>しゃっきん</rt></ruby>をし<strong>てでも</strong>、その<ruby>店<rt>みせ</rt></ruby>を<ruby>買<rt>か</rt></ruby>いたいと<ruby>思<rt>おも</rt></ruby>っている。',
+            plain: '借金をしてでも、その店を買いたいと思っている。',
+            zh: '就算要借錢，我也想買下那家店。',
+          },
+          {
+            jp: '<ruby>無理<rt>むり</rt></ruby>をし<strong>てでも</strong>、<ruby>今日中<rt>きょうじゅう</rt></ruby>にこの<ruby>仕事<rt>しごと</rt></ruby>を<ruby>終<rt>お</rt></ruby>わらせたい。',
+            plain: '無理をしてでも、今日中にこの仕事を終わらせたい。',
+            zh: '就算勉強一點，我也想在今天之內把這份工作做完。',
+          },
+        ],
+      },
+      {
+        id: 80,
+        pattern: 'つもり (a: 打算 / b: 當作 / c: 自認為)',
+        reading: 'つもり',
+        titleRuby: 'つもり',
+        meaningZh: 'a：打算…　b：當作…　c：自認為…（覺得、諗著）',
+        meaningEn: 'a intend to... b as if / pretending to... c believe oneself to be...',
+        connection: '動詞辞書形・ない形・た形 ／ い形 ／ な形な ／ 名詞の ＋ つもり',
+        nuanceNote:
+          '筆記整理了 N3 三大核心用法：①「打算」（如：行くつもりだ）；②「當作」（如：旅行に行ったつもりで＝就當作去旅行了）；③「自認為／覺得、諗著」（如：自分では若いつもりだ＝自己還以為很年輕）。',
+        examples: [
+          {
+            jp: '<ruby>来年<rt>らいねん</rt></ruby>の<ruby>夏<rt>なつ</rt></ruby>、<ruby>日本<rt>にほん</rt></ruby>へ<ruby>留学<rt>りゅうがく</rt></ruby>する<strong>つもり</strong>だ。',
+            plain: '来年の夏、日本へ留学するつもりだ。',
+            zh: '我打算明年夏天去日本留學。',
+          },
+          {
+            jp: '<ruby>旅行<rt>りょこう</rt></ruby>に<ruby>行<rt>い</rt></ruby>った<strong>つもり</strong>で、そのお<ruby>金<rt>かね</rt></ruby>を<ruby>貯金<rt>ちょきん</rt></ruby>しよう。',
+            plain: '旅行に行ったつもりで、そのお金を貯金しよう。',
+            zh: '就當作去了一趟旅行，把那筆錢存下來吧。',
+          },
+        ],
+      },
+    ];
+
+    // =========================================================================
+    // 2. DRAG & DROP FILL-IN-THE-BLANK QUESTION POOL (ALL 80 ITEMS)
+    // =========================================================================
+    const dragPool = [
+      { id: 1, before: 'さんざん迷った', after: '、結局何も買わなかった。', answer: 'あげく', zh: '猶豫了老半天之後，結果什麼也沒買。' },
+      { id: 2, before: '嬉しさの', after: '、涙が出てしまった。', answer: 'あまり', zh: '因為太過高興，眼淚不由自主地流了下來。' },
+      { id: 3, before: '約束した', after: '、必ず守らなければならない。', answer: '以上', zh: '既然約定好了，就一定要遵守。' },
+      { id: 4, before: 'この仕事は大変な', after: '、やりがいがある。', answer: '一方で', zh: '這份工作一方面很辛苦，另一方面也很有成就感。' },
+      { id: 5, before: '最近、物価は上がる', after: '。', answer: '一方だ', zh: '最近物價不斷上漲。' },
+      { id: 6, before: 'この店は安い', after: '、味もとてもおいしい。', answer: 'うえに', zh: '這家店不僅便宜，味道也非常好吃。' },
+      { id: 7, before: '契約書をよく読んだ', after: '、サインしてください。', answer: 'うえで', zh: '請在仔細讀過合約書之後再簽名。' },
+      { id: 8, before: 'こうなった', after: '、本当のことを話すしかない。', answer: 'うえは', zh: '事情既然已經到了這個地步，也只能說出實話了。' },
+      { id: 9, before: '温かい', after: '、どうぞ召し上がってください。', answer: 'うちに', zh: '請趁熱享用。' },
+      { id: 10, before: '雨が降っている', after: '、外で遊べない。', answer: 'うちは', zh: '在下雨的整個期間內，都不能在外面玩。' },
+      { id: 11, before: 'みんなで力を合わせて頑張ろう', after: '。', answer: 'ではないか', zh: '大家一起齊心協力加油吧！' },
+      { id: 12, before: 'そんなことは絶対にあり', after: '。', answer: '得ない', zh: '那種事情絕對不可能發生。' },
+      { id: 13, before: '先生の', after: '、試験に合格できました。', answer: 'おかげで', zh: '多虧了老師，我才能通過考試。' },
+      { id: 14, before: 'このまま雨が続くと、川が氾濫する', after: '。', answer: '恐れがある', zh: '如果雨繼續這樣下下去，河川恐怕有氾濫的危險。' },
+      { id: 15, before: '一生懸命勉強した', after: '、N2に合格した。', answer: '甲斐があって', zh: '拼命讀書沒有白費，順利通過了 N2。' },
+      { id: 16, before: '体が丈夫な', after: '、旅行を楽しみたい。', answer: '限り', zh: '只要身體還硬朗，我就想繼續享受旅行。' },
+      { id: 17, before: '私が知っている', after: '、彼はとても真面目な人だ。', answer: '限りでは', zh: '就我所知的範圍而言，他是一個非常認真的人。' },
+      { id: 18, before: 'テーブルの上に飲み', after: 'のコーヒーが置いてある。', answer: 'かけ', zh: '桌上放著一杯喝到一半的咖啡。' },
+      { id: 19, before: 'そのニュースは本当とは信じ', after: '。', answer: 'がたい', zh: '那則新聞實在令人難以置信是真的。' },
+      { id: 20, before: '彼は最近体調が悪く、学校を休み', after: 'だ。', answer: 'がち', zh: '他最近身體不舒服，常常請假沒去上學。' },
+      { id: 21, before: '空が暗くなった', after: '、急に大雨が降り出した。', answer: 'かと思うと', zh: '天空剛暗下來，緊接著就下起了大雨。' },
+      { id: 22, before: '彼女は笑っている', after: '、急に怒り出す。', answer: 'かと思えば', zh: '她剛剛還在笑，轉眼間卻突然發起脾氣來。' },
+      { id: 23, before: 'ベルが鳴るか鳴らない', after: '、生徒たちは教室を飛び出した。', answer: 'かのうちに', zh: '下課鐘剛響的瞬間，學生們就衝出了教室。' },
+      { id: 24, before: 'その件については、私からはお答えし', after: '。', answer: 'かねます', zh: '關於這件事，由我來回答實在有些為難（恕難回答）。' },
+      { id: 25, before: 'そんなにスピードを出すと、事故を起こし', after: '。', answer: 'かねない', zh: '開那麼快的話，搞不好會發生車禍的。' },
+      { id: 26, before: '彼の実力', after: '、合格は間違いないだろう。', answer: 'からいうと', zh: '從他的實力來說的話，及格應該是毫無疑問的吧。' },
+      { id: 27, before: '親', after: '、いくつになっても子供は子供だ。', answer: 'から見ると', zh: '從父母的角度來看，不管長到幾歲孩子永遠都是孩子。' },
+      { id: 28, before: '現場の状況', after: '、犯人は窓から入ったらしい。', answer: 'からすると', zh: '從現場的狀況來判斷的話，犯人似乎是從窗戶進來的。' },
+      { id: 29, before: '彼は態度', after: '失礼だ。', answer: 'からして', zh: '他光是態度就很沒禮貌。' },
+      { id: 30, before: 'お金がある', after: '、幸せだとは限らない。', answer: 'からといって', zh: '雖說有錢，但並不一定就幸福。' },
+      { id: 31, before: '今夜から明日の朝', after: '、強い雨が降るでしょう。', answer: 'にかけて', zh: '從今晚到明天早上這段期間，應該會下大雨吧。' },
+      { id: 32, before: '日本に来た', after: '、日本語をペラペラになりたい。', answer: 'からには', zh: '既然來到了日本，就想把日文說得流利。' },
+      { id: 33, before: 'あなたのことが大切だ', after: '、厳しく言うのです。', answer: 'からこそ', zh: '正是因為在乎你，才會對你說得這麼嚴厲。' },
+      { id: 34, before: '彼は何も知らない', after: '、平気な顔をしていた。', answer: 'かのように', zh: '他擺出一副若無其事的表情，好像什麼都不知道一樣。' },
+      { id: 35, before: 'この部屋は狭い', after: '、駅から近くて便利だ。', answer: 'かわりに', zh: '這間房間雖然狹小，但相對地離車站很近很方便。' },
+      { id: 36, before: '昨日からちょっと風邪', after: 'で、喉が痛い。', answer: '気味', zh: '從昨天開始感覺有點感冒，喉嚨痛痛的。' },
+      { id: 37, before: '彼とは10年前に会った', after: '、一度も会っていない。', answer: 'きり', zh: '自從10年前見過他一次之後，就再也沒有見過面了。' },
+      { id: 38, before: '料理が多すぎて、全部は食べ', after: '。', answer: 'きれない', zh: '料理太多了，根本吃不完。' },
+      { id: 39, before: '自分でできない', after: '、人の文句ばかり言う。', answer: 'くせに', zh: '自己明明就不會做，卻只會一直挑別人的毛病。' },
+      { id: 40, before: '忙しくても、連絡', after: 'できるでしょう。', answer: 'くらい', zh: '就算再忙，起碼聯絡一下總做得到吧。' },
+      { id: 41, before: '彼女は何か言いた', after: 'な表情でこちらを見ていた。', answer: 'げ', zh: '她露出一副好像有話想說的表情看著這邊。' },
+      { id: 42, before: '飛行機は遅れる', after: '、予定通り到着した。', answer: 'ことなく', zh: '飛機沒有誤點，準時抵達了。' },
+      { id: 43, before: '驚いた', after: '、10歳の少年がその難問を解いた。', answer: 'ことに', zh: '令人驚訝的是，一位10歲的少年解開了那道難題。' },
+      { id: 44, before: '真面目な田中さんの', after: '、きっと時間通りに来るだろう。', answer: 'ことだから', zh: '正因為是認真的田中先生，他一定會準時來的吧。' },
+      { id: 45, before: '靴がそろえてある', after: '、彼はもう帰宅したことが分かる。', answer: 'ことから', zh: '從鞋子擺放整齊這件事來看，可以知道他已經回家了。' },
+      { id: 46, before: 'このケーキはおいしい', after: 'おいしいが、値段がちょっと高い。', answer: 'ことは', zh: '這個蛋糕好吃是好吃，但價格有點貴。' },
+      { id: 47, before: '健康になりたければ、毎日運動する', after: '。', answer: 'ことだ', zh: '如果想變健康的話，就應該每天運動。' },
+      { id: 48, before: '合格の知らせを聞いたとき、どれほど嬉しかった', after: '。', answer: 'ことか', zh: '聽到及格消息的時候，我是多麼高興啊！' },
+      { id: 49, before: '準備はできているから、何も心配する', after: 'よ。', answer: 'ことはない', zh: '準備都做好了，所以什麼都用不著擔心喔。' },
+      { id: 50, before: 'この図書館では、飲食してはいけない', after: '。', answer: 'ことになっている', zh: '這間圖書館規定禁止飲食。' },
+      { id: 51, before: 'お帰りの', after: 'は、お忘れ物のないようご注意ください。', answer: '際', zh: '您離開的時候，請注意不要遺忘隨身物品。' },
+      { id: 52, before: '重要な会議の', after: 'に、携帯が鳴ってしまった。', answer: '最中', zh: '正在開重要會議的時候，手機竟然響了起來。' },
+      { id: 53, before: '忙しすぎて、水を飲む時間', after: 'ない。', answer: 'さえ', zh: '忙得不可開交，連喝水的時間都沒有。' },
+      { id: 54, before: 'このボタンを押し', after: 'すれば、機械が動きます。', answer: 'さえ', zh: '只要按下這個按鈕，機器就會運作。' },
+      { id: 55, before: '台風が近づいているので、旅行は中止せ', after: '。', answer: 'ざるをえない', zh: '因為颱風正在逼近，旅行不得不取消。' },
+      { id: 56, before: '空港に到着し', after: '、すぐにご連絡します。', answer: '次第', zh: '一抵達機場，我就會立刻跟您聯絡。' },
+      { id: 57, before: '健康', after: 'の理由で、お酒をやめることにした。', answer: '上', zh: '基於健康上的理由，決定戒酒了。' },
+      { id: 58, before: '長年の研究の', after: 'に、新しい薬が開発された。', answer: '末', zh: '經過多年的研究之後，終於開發出了新藥。' },
+      { id: 59, before: 'あまりにもおかしくて、笑わ', after: '。', answer: 'ずにはいられない', zh: '實在太好笑了，讓人忍不住笑出來。' },
+      { id: 60, before: '傘を持っていたので、雨に濡れ', after: '。', answer: 'ずにすんだ', zh: '因為帶了傘，所以沒有淋到雨就解決了。' },
+      { id: 61, before: 'バイキングだから、好きな', after: '食べていいよ。', answer: 'だけ', zh: '因為是自助餐，喜歡吃多少就可以吃多少喔。' },
+      { id: 62, before: 'さすが一流ホテル', after: '、サービスが素晴らしい。', answer: 'だけあって', zh: '真不愧是一流飯店，服務非常出色。' },
+      { id: 63, before: 'たとえ失敗し', after: '、後悔はしません。', answer: 'ても', zh: '即使失敗了，我也不會後悔。' },
+      { id: 64, before: '駅に問い合わせ', after: '、忘れ物が見つかった。', answer: 'たところ', zh: '向車站詢問之後，遺失物找到了。' },
+      { id: 65, before: '家を出', after: '、雨が降り出した。', answer: 'たとたん', zh: '剛一踏出家門，就下起雨來了。' },
+      { id: 66, before: 'この写真を見る', after: '、大学時代を思い出す。', answer: 'たびに', zh: '每當看到這張照片，就會想起大學時代。' },
+      { id: 67, before: '彼の作文は漢字の間違い', after: 'だ。', answer: 'だらけ', zh: '他的作文裡滿是漢字錯誤。' },
+      { id: 68, before: '銀行へ行く', after: '、この手紙を出してきてくれませんか。', answer: 'ついでに', zh: '去銀行的時候，能不能順便幫我把這封信寄出去？' },
+      { id: 69, before: '明日の会議は、何時からだった', after: '。', answer: 'っけ', zh: '明天的會議是幾點開始來著？' },
+      { id: 70, before: 'こんなにたくさんの宿題、1時間で終わり', after: '。', answer: 'っこない', zh: '這麼多作業，1個小時根本不可能寫得完。' },
+      { id: 71, before: '体に悪いと知り', after: '、タバコがやめられない。', answer: 'つつも', zh: '雖然明知道對身體不好，卻還是戒不掉菸。' },
+      { id: 72, before: '最近、環境問題への関心が高まり', after: '。', answer: 'つつある', zh: '最近，人們對環境問題的關注正在不斷提高。' },
+      { id: 73, before: '彼はもう二十歳なのに、まだ子供', after: 'ところがある。', answer: 'っぽい', zh: '他都已經二十歲了，卻還有點孩子氣的地方。' },
+      { id: 74, before: '日本に来', after: '、毎日がとても充実している。', answer: 'て以来', zh: '自從來到日本以來，每天都過得非常充實。' },
+      { id: 75, before: '親に相談し', after: '、決められません。', answer: 'てからでないと', zh: '如果不先跟父母商量的話，我沒辦法做決定。' },
+      { id: 76, before: '国の家族に会いたく', after: '。', answer: 'てしょうがない', zh: '非常想見家鄉的家人（想得不得了）。' },
+      { id: 77, before: '一人で暮らす祖母のことが心配', after: '。', answer: 'でならない', zh: '我非常擔心獨自生活的祖母。' },
+      { id: 78, before: '走ったあとで、喉が渇い', after: '。', answer: 'てたまらない', zh: '跑完步之後，口渴得受不了。' },
+      { id: 79, before: '借金をし', after: '、その店を買いたいと思っている。', answer: 'てでも', zh: '就算要借錢，我也想買下那家店。' },
+      { id: 80, before: '旅行に行った', after: 'で、そのお金を貯金しよう。', answer: 'つもり', zh: '就當作去了一趟旅行，把那筆錢存下來吧。' },
+    ];
+
+    // =========================================================================
+    // 3. SENTENCE SCRAMBLE QUESTIONS (ALL 80 GRAMMAR ITEMS COVERED)
+    // =========================================================================
+    const scrambleQuestions = [
+      { grammarId: 1, tag: '1. 〜あげく', zh: '猶豫了老半天之後，結果什麼也沒買。', en: 'After hesitating for a long time, I ended up buying nothing.', chunks: ['さんざん', '迷ったあげく、', '結局', '何も', '買わなかった。'] },
+      { grammarId: 2, tag: '2. 〜あまり', zh: '因為太過緊張，一句話也說不出來。', en: 'I was so nervous that I could not say a word.', chunks: ['緊張した', 'あまり、', '言葉が', '出なかった。'] },
+      { grammarId: 3, tag: '3. 〜以上は', zh: '既然要上場比賽，就想全力以赴。', en: 'Now that I am entering the match, I want to give it my all.', chunks: ['試合に', '出る以上は、', '全力を', '尽くしたい。'] },
+      { grammarId: 4, tag: '4. 〜一方で', zh: '這份工作一方面很辛苦，另一方面也很有成就感。', en: 'While this job is hard, it is also rewarding.', chunks: ['この仕事は', '大変な一方で、', 'やりがいが', 'ある。'] },
+      { grammarId: 5, tag: '5. 〜一方だ', zh: '如果不用的話，外語就會越來越忘記。', en: 'If you do not use it, you will just keep forgetting a foreign language.', chunks: ['使わないと、', '外国語は', '忘れる', '一方だ。'] },
+      { grammarId: 6, tag: '6. 〜うえに', zh: '不僅迷了路，甚至還下起雨來了。', en: 'Not only did I get lost, it even started raining.', chunks: ['道に', '迷ったうえに、', '雨まで', '降ってきた。'] },
+      { grammarId: 7, tag: '7. 〜うえで', zh: '請在仔細讀過合約書之後再簽名。', en: 'Please sign after carefully reading the contract.', chunks: ['契約書を', 'よく読んだ', 'うえで、', 'サインしてください。'] },
+      { grammarId: 8, tag: '8. 〜うえは', zh: '既然接下了這件事，我就會負起責任完成。', en: 'Now that I have taken it on, I will complete it responsibly.', chunks: ['引き受けた', 'うえは、', '責任をもって', 'やり遂げます。'] },
+      { grammarId: 9, tag: '9. 〜うちに', zh: '在聽音樂的期間，不知不覺就睡著了。', en: 'While listening to music, I fell asleep without realizing it.', chunks: ['音楽を', '聞いている', 'うちに、', '眠ってしまった。'] },
+      { grammarId: 10, tag: '10. 〜うちは', zh: '在身體還健康的這段期間，我想繼續工作下去。', en: 'As long as I am healthy, I want to keep working.', chunks: ['元気な', 'うちは、', '働き', '続けたい。'] },
+      { grammarId: 11, tag: '11. 〜ようではないか', zh: '大家一起齊心協力加油吧！', en: 'Let us all join forces and do our best!', chunks: ['みんなで', '力を合わせて', '頑張ろう', 'ではないか。'] },
+      { grammarId: 12, tag: '12. 〜得る', zh: '這是任何人都可能會遇到的問題。', en: 'This is a problem that could happen to anyone.', chunks: ['誰にでも', '起こり', '得る', '問題だ。'] },
+      { grammarId: 13, tag: '13. おかげで', zh: '多虧了老師，我才能通過考試。', en: 'Thanks to my teacher, I passed the exam.', chunks: ['先生の', 'おかげで、', '試験に', '合格できました。'] },
+      { grammarId: 14, tag: '14. 〜恐れがある', zh: '恐怕有個人資料外洩的風險。', en: 'There is a risk that personal information may be leaked.', chunks: ['個人情報が', '漏れる', '恐れが', 'ある。'] },
+      { grammarId: 15, tag: '15. 〜甲斐がある', zh: '拼命讀書沒有白費，順利通過了 N2。', en: 'My hard studying paid off and I passed N2.', chunks: ['一生懸命', '勉強した', '甲斐があって、', 'N2に合格した。'] },
+      { grammarId: 16, tag: '16. 〜限り', zh: '只要身體還硬朗，我就想繼續享受旅行。', en: 'As long as I am healthy, I want to keep enjoying travel.', chunks: ['体が', '丈夫な限り、', '旅行を', '楽しみたい。'] },
+      { grammarId: 17, tag: '17. 〜限りでは', zh: '據我所看的天氣預報，明天似乎會放晴。', en: 'As far as the weather forecast I saw says, it will be sunny tomorrow.', chunks: ['天気予報を', '見た限りでは、', '明日は', '晴れるそうだ。'] },
+      { grammarId: 18, tag: '18. 〜かけの', zh: '桌上放著一杯喝到一半的咖啡。', en: 'A half-drunk cup of coffee is on the table.', chunks: ['テーブルの上に', '飲みかけの', 'コーヒーが', '置いてある。'] },
+      { grammarId: 19, tag: '19. 〜がたい', zh: '那則新聞實在令人難以置信是真的。', en: 'It is hard to believe that news is true.', chunks: ['そのニュースは', '本当とは', '信じ', 'がたい。'] },
+      { grammarId: 20, tag: '20. 〜がち', zh: '一個人住的話，很容易變得蔬菜攝取不足。', en: 'When living alone, one tends to lack vegetables.', chunks: ['一人暮らしだと、', '野菜が', '不足し', 'がちになる。'] },
+      { grammarId: 21, tag: '21. 〜かと思うと', zh: '天空剛暗下來，緊接著就下起了大雨。', en: 'No sooner had the sky darkened than heavy rain began to fall.', chunks: ['空が', '暗くなった', 'かと思うと、', '急に大雨が', '降り出した。'] },
+      { grammarId: 22, tag: '22. 〜かと思えば', zh: '她剛剛還在笑，轉眼間卻突然發起脾氣來。', en: 'Just when you think she is laughing, she suddenly gets angry.', chunks: ['彼女は', '笑っている', 'かと思えば、', '急に', '怒り出す。'] },
+      { grammarId: 23, tag: '23. 〜か〜ないかのうちに', zh: '剛鑽進被窩的一瞬間就睡著了。', en: 'No sooner had I gotten into bed than I fell asleep.', chunks: ['布団に', '入ったか', '入らないかの', 'うちに、', '眠ってしまった。'] },
+      { grammarId: 24, tag: '24. 〜かねる', zh: '對於他的意見，我實在難以贊成。', en: 'I find it difficult to agree with his opinion.', chunks: ['彼の', '意見には', '賛成し', 'かねる。'] },
+      { grammarId: 25, tag: '25. 〜かねない', zh: '一直這麼勉強自己的話，很有可能會把身體搞垮喔。', en: 'If you keep overdoing it, you might ruin your health.', chunks: ['無理ばかり', 'していると、', '体を', '壊しかねないよ。'] },
+      { grammarId: 26, tag: '26. からいうと', zh: '從他的實力來說的話，及格應該是毫無疑問的吧。', en: 'Speaking from his ability, passing is beyond doubt.', chunks: ['彼の', '実力', 'からいうと、', '合格は', '間違いないだろう。'] },
+      { grammarId: 27, tag: '27. から見ると', zh: '從父母的角度來看，不管長到幾歲孩子永遠都是孩子。', en: 'From a parent viewpoint, children are always children.', chunks: ['親', 'から見ると、', 'いくつになっても', '子供は子供だ。'] },
+      { grammarId: 28, tag: '28. からすると', zh: '從現場的狀況來判斷的話，犯人似乎是從窗戶進來的。', en: 'Judging from the scene, the culprit seems to have entered through the window.', chunks: ['現場の', '状況', 'からすると、', '犯人は窓から', '入ったらしい。'] },
+      { grammarId: 29, tag: '29. からして', zh: '這道料理光是聞香味就覺得很好吃。', en: 'Judging just from the aroma, this dish seems delicious.', chunks: ['この料理は', '匂い', 'からして', 'おいしそうだ。'] },
+      { grammarId: 30, tag: '30. からといって', zh: '雖說很簡單，但也不能因此掉以輕心。', en: 'Just because it is easy does not mean you can let your guard down.', chunks: ['簡単だ', 'からといって、', '油断して', 'はいけない。'] },
+      { grammarId: 31, tag: '31. 〜から〜にかけて', zh: '從關東到東北一帶，在廣大範圍內發生了地震。', en: 'An earthquake occurred over a wide area from Kanto to Tohoku.', chunks: ['関東から', '東北に', 'かけて、', '広い範囲で', '地震があった。'] },
+      { grammarId: 32, tag: '32. からには', zh: '既然來到了日本，就想把日文說得流利。', en: 'Now that I have come to Japan, I want to become fluent in Japanese.', chunks: ['日本に', '来た', 'からには、', '日本語を', 'ペラペラになりたい。'] },
+      { grammarId: 33, tag: '33. からこそ', zh: '正是因為吃過苦，才更能體會別人的痛苦。', en: 'It is precisely because you have suffered that you understand pain.', chunks: ['苦労した', 'からこそ、', '人の痛みが', '分かるようになる。'] },
+      { grammarId: 34, tag: '34. かのように', zh: '他擺出一副若無其事的表情，好像什麼都不知道一樣。', en: 'He looked calm as if he knew nothing.', chunks: ['彼は', '何も知らない', 'かのように、', '平気な顔を', 'していた。'] },
+      { grammarId: 35, tag: '35. かわりに', zh: '這間房間雖然狹小，但相對地離車站很近很方便。', en: 'This room is small, but in exchange it is near the station and convenient.', chunks: ['この部屋は', '狭い', 'かわりに、', '駅から近くて', '便利だ。'] },
+      { grammarId: 36, tag: '36. 〜気味', zh: '從昨天開始感覺有點感冒，喉嚨痛痛的。', en: 'Since yesterday I have had a touch of a cold and a sore throat.', chunks: ['昨日から', 'ちょっと', '風邪気味で、', '喉が痛い。'] },
+      { grammarId: 37, tag: '37. 〜きり', zh: '自從10年前見過他一次之後，就再也沒有見過面了。', en: 'Since meeting him 10 years ago, I have not seen him even once.', chunks: ['彼とは', '10年前に', '会ったきり、', '一度も', '会っていない。'] },
+      { grammarId: 38, tag: '38. 〜きる', zh: '這本書太有趣了，一天就全部讀完了。', en: 'This book was so interesting that I read it all in one day.', chunks: ['この本は', '面白くて、', '一日で', '読みきった。'] },
+      { grammarId: 39, tag: '39. くせに', zh: '明明就知道，卻不肯告訴我。', en: 'Even though you know, you will not tell me.', chunks: ['知っている', 'くせに、', '教えて', 'くれない。'] },
+      { grammarId: 40, tag: '40. くらい', zh: '就算再忙，起碼聯絡一下總做得到吧。', en: 'Even if you are busy, at least you can contact me.', chunks: ['忙しくても、', '連絡', 'くらい', 'できるでしょう。'] },
+      { grammarId: 41, tag: '41. 〜げ', zh: '小狗看起來很悲傷地叫著。', en: 'The puppy is crying sadly.', chunks: ['子犬が', '悲し', 'げに', '鳴いている。'] },
+      { grammarId: 42, tag: '42. ことなく', zh: '飛機沒有誤點，準時抵達了。', en: 'The airplane arrived on schedule without delay.', chunks: ['飛行機は', '遅れる', 'ことなく、', '予定通り', '到着した。'] },
+      { grammarId: 43, tag: '43. ことに', zh: '遺憾的是，明天的活動取消了。', en: 'Regrettably, tomorrow event was canceled.', chunks: ['残念な', 'ことに、', '明日のイベントは', '中止になった。'] },
+      { grammarId: 44, tag: '44. ことだから', zh: '正因為是認真的田中先生，他一定會準時來的吧。', en: 'Being the serious Mr. Tanaka, he will surely come on time.', chunks: ['真面目な', '田中さんの', 'ことだから、', 'きっと時間通りに', '来るだろう。'] },
+      { grammarId: 45, tag: '45. ことから', zh: '從鞋子擺放整齊這件事來看，可以知道他已經回家了。', en: 'From the shoes being neatly arranged, we know he is home.', chunks: ['靴が', 'そろえてある', 'ことから、', '彼はもう帰宅したことが', '分かる。'] },
+      { grammarId: 46, tag: '46. AことはAが', zh: '這個蛋糕好吃是好吃，但價格有點貴。', en: 'This cake is delicious, to be sure, but the price is a bit high.', chunks: ['このケーキは', 'おいしいことは', 'おいしいが、', '値段が', 'ちょっと高い。'] },
+      { grammarId: 47, tag: '47. ことだ', zh: '如果想變健康的話，就應該每天運動。', en: 'If you want to become healthy, you should exercise every day.', chunks: ['健康に', 'なりたければ、', '毎日', '運動する', 'ことだ。'] },
+      { grammarId: 48, tag: '48. ことか', zh: '至今為止我曾多少次想過要放棄啊！', en: 'How many times have I thought of giving up until now!', chunks: ['これまで', '何度', 'やめようと', '思った', 'ことか。'] },
+      { grammarId: 49, tag: '49. ことはない', zh: '還有時間，沒必要著急。', en: 'There is still time, so there is no need to hurry.', chunks: ['まだ', '時間が', 'あるから、', '急ぐ', 'ことはない。'] },
+      { grammarId: 50, tag: '50. ことになっている', zh: '這間圖書館規定禁止飲食。', en: 'The rule in this library is that eating and drinking are prohibited.', chunks: ['この図書館では、', '飲食して', 'はいけない', 'ことに', 'なっている。'] },
+      { grammarId: 51, tag: '51. 際', zh: '來日本的時候，我爬了富士山。', en: 'When I came to Japan, I climbed Mt. Fuji.', chunks: ['日本へ', '来た', '際に、', '富士山に', '登りました。'] },
+      { grammarId: 52, tag: '52. 最中', zh: '正在吃飯的時候，發生了地震。', en: 'In the middle of eating a meal, an earthquake occurred.', chunks: ['食事を', 'している', '最中に、', '地震が', '起きた。'] },
+      { grammarId: 53, tag: '53. さえ', zh: '那麼簡單的漢字，連小孩子都看得懂。', en: 'Even a child can read such simple kanji.', chunks: ['そんな', '簡単な漢字は、', '子供', 'さえ', '読める。'] },
+      { grammarId: 54, tag: '54. 〜さえ〜ば', zh: '只要身體健康，什麼事都做得到。', en: 'As long as you are healthy, you can do anything.', chunks: ['体', 'さえ', '元気なら、', '何でも', 'できる。'] },
+      { grammarId: 55, tag: '55. ざるをえない', zh: '因為颱風正在逼近，旅行不得不取消。', en: 'Since a typhoon is approaching, we have no choice but to cancel the trip.', chunks: ['台風が', '近づいているので、', '旅行は', '中止せざるを', 'えない。'] },
+      { grammarId: 56, tag: '56. 次第', zh: '能不能考上試，全看你的努力而定。', en: 'Whether you pass the exam depends on your effort.', chunks: ['試験に', '受かるかどうかは、', 'あなたの', '努力', '次第だ。'] },
+      { grammarId: 57, tag: '57. 〜上', zh: '基於健康上的理由，決定戒酒了。', en: 'For health reasons, I decided to quit drinking alcohol.', chunks: ['健康', '上の', '理由で、', 'お酒を', 'やめることにした。'] },
+      { grammarId: 58, tag: '58. 末に', zh: '經過多方思考的結果，決定去留學了。', en: 'After thinking it over a lot, I decided to study abroad.', chunks: ['いろいろ', '考えた', '末、', '留学することを', '決めた。'] },
+      { grammarId: 59, tag: '59. ずにはいられない', zh: '看了那部電影，讓人不由得流下眼淚。', en: 'Watching that movie, I could not help shedding tears.', chunks: ['その映画を', '見て、', '涙を流さ', 'ずには', 'いられなかった。'] },
+      { grammarId: 60, tag: '60. ずにすむ', zh: '因為只是輕傷，所以不用住院就沒事了。', en: 'Because it was a minor injury, I got by without hospitalization.', chunks: ['軽い', 'ケガだったので、', '入院', 'せずに', 'すみました。'] },
+      { grammarId: 61, tag: '61. だけ', zh: '請盡量早點回覆。', en: 'Please reply as soon as possible.', chunks: ['できる', 'だけ', '早く', '返信して', 'ください。'] },
+      { grammarId: 62, tag: '62. だけあって', zh: '真不愧是一流飯店，服務非常出色。', en: 'As expected of a first-class hotel, the service is wonderful.', chunks: ['さすが', '一流ホテル', 'だけあって、', 'サービスが', '素晴らしい。'] },
+      { grammarId: 63, tag: '63. たとえ〜ても', zh: '即使失敗了，我也不會後悔。', en: 'Even if I fail, I will not regret it.', chunks: ['たとえ', '失敗', 'しても、', '後悔は', 'しません。'] },
+      { grammarId: 64, tag: '64. 〜たところ', zh: '跟老師商量之後，老師給了我很好的建議。', en: 'When I consulted my teacher, they gave me good advice.', chunks: ['先生に', '相談した', 'ところ、', 'いいアドバイスを', 'くれた。'] },
+      { grammarId: 65, tag: '65. たとたん', zh: '剛一站起來，就感到一陣頭暈。', en: 'The moment I stood up, I felt dizzy.', chunks: ['立ち', '上がった', 'とたんに、', 'めまいが', 'した。'] },
+      { grammarId: 66, tag: '66. たびに', zh: '每當看到這張照片，就會想起大學時代。', en: 'Whenever I look at this photo, I remember my college days.', chunks: ['この写真を', '見る', 'たびに、', '大学時代を', '思い出す。'] },
+      { grammarId: 67, tag: '67. だらけ', zh: '跌了一跤，衣服變得滿是泥巴。', en: 'I fell down and my clothes got covered in mud.', chunks: ['転んで、', '服が', '泥だらけに', 'なってしまった。'] },
+      { grammarId: 68, tag: '68. ついでに', zh: '散步的時候順便在便利商店買了牛奶。', en: 'While taking a walk, I bought milk at the convenience store.', chunks: ['散歩の', 'ついでに、', 'コンビニで', '牛乳を', '買った。'] },
+      { grammarId: 69, tag: '69. っけ', zh: '明天的會議是幾點開始來著？', en: 'What time was tomorrow meeting starting again?', chunks: ['明日の', '会議は、', '何時から', 'だった', 'っけ。'] },
+      { grammarId: 70, tag: '70. っこない', zh: '連練習都不練，比賽根本不可能贏的啦。', en: 'Without even practicing, there is no way you can win the match.', chunks: ['練習も', 'しないで、', '試合に', '勝てっこ', 'ないよ。'] },
+      { grammarId: 71, tag: '71. つつも', zh: '雖然明知道對身體不好，卻還是戒不掉菸。', en: 'Even though I know it is bad for my health, I cannot quit smoking.', chunks: ['体に悪いと', '知り', 'つつも、', 'タバコが', 'やめられない。'] },
+      { grammarId: 72, tag: '72. つつある', zh: '季節正在從春天逐漸轉變為夏天。', en: 'The season is gradually changing from spring to summer.', chunks: ['季節は', '春から', '夏へと', '変わり', 'つつある。'] },
+      { grammarId: 73, tag: '73. っぽい', zh: '上了年紀之後，最近變得很健忘。', en: 'Having gotten older, I have become very forgetful lately.', chunks: ['年をとって、', '最近', 'とても', '忘れっぽく', 'なった。'] },
+      { grammarId: 74, tag: '74. て以来', zh: '自從來到日本以來，每天都過得非常充實。', en: 'Since coming to Japan, every day has been very fulfilling.', chunks: ['日本に', '来て', '以来、', '毎日が', 'とても充実している。'] },
+      { grammarId: 75, tag: '75. てからでないと', zh: '如果不先實際用用看的話，是不知道好壞的。', en: 'Unless you actually try using it first, you cannot tell how good it is.', chunks: ['実際に', '使ってみて', 'からでないと、', '良さは', '分からない。'] },
+      { grammarId: 76, tag: '76. てしょうがない', zh: '非常在意考試的結果（在意得不得了）。', en: 'I am unbearably anxious about the exam results.', chunks: ['試験の', '結果が', '気になって', 'しょうが', 'ない。'] },
+      { grammarId: 77, tag: '77. てならない', zh: '我非常擔心獨自生活的祖母。', en: 'I cannot help worrying about my grandmother living alone.', chunks: ['一人で', '暮らす', '祖母のことが', '心配で', 'ならない。'] },
+      { grammarId: 78, tag: '78. てたまらない', zh: '牙齒痛得受不了，所以我要去看牙醫。', en: 'My tooth hurts unbearably, so I am going to the dentist.', chunks: ['歯が', '痛くて', 'たまらないので、', '歯医者に', '行きます。'] },
+      { grammarId: 79, tag: '79. てでも', zh: '就算勉強一點，我也想在今天之內把這份工作做完。', en: 'Even if I have to push myself, I want to finish this job today.', chunks: ['無理を', 'してでも、', '今日中に', 'この仕事を', '終わらせたい。'] },
+      { grammarId: 80, tag: '80. つもり', zh: '我打算明年夏天去日本留學。', en: 'I intend to study abroad in Japan next summer.', chunks: ['来年の', '夏、', '日本へ', '留学する', 'つもりだ。'] },
+    ];
+
+    // =========================================================================
+    // 4. NUANCE CONTRAST QUIZ (40 ITEMS COVERING 1–80)
+    // =========================================================================
+    const nuanceQuestions = [
+      {
+        grammarId: 9,
+        topic: 'うちに vs うちは',
+        jp: '忘れない（　　　）、メモしておきましょう。',
+        zh: '趁著還沒忘記之前，先記在筆記裡吧。',
+        options: ['うちに', 'うちは', 'うえに', 'あげく'],
+        correct: 0,
+        explain: '「忘れないうちに」表示「趁著（還沒忘記的狀態改變前）趕快做某事」。「うちは」強調在整個期間內持續維持某種狀態或限制。',
+      },
+      {
+        grammarId: 10,
+        topic: 'うちに vs うちは',
+        jp: '学生の（　　　）、親から生活費をもらっていた。',
+        zh: '在還是學生的整個期間內，都一直拿父母的生活費。',
+        options: ['うちに', 'うちは', 'うえは', 'おかげで'],
+        correct: 1,
+        explain: '表示「在身為學生的整個期間內都一直持續某狀態（畢業後就不再如此）」，因此用「うちは」。',
+      },
+      {
+        grammarId: 4,
+        topic: '一方で vs 一方だ',
+        jp: 'インターネットは便利な（　　　）、危険な面もある。',
+        zh: '網路一方面很方便，但另一方面也有危險的一面。',
+        options: ['一方だ', '一方で', 'うえに', 'かわりに'],
+        correct: 1,
+        explain: '對比同一事物的正反兩面（方便 vs 危險）使用「一方で」。「一方だ」是接在動詞辞書形後面表「不斷朝單一方向變化」。',
+      },
+      {
+        grammarId: 5,
+        topic: '一方で vs 一方だ',
+        jp: '少子化が進み、人口は減る（　　　）。',
+        zh: '少子化加劇，人口不斷減少。',
+        options: ['一方だ', '一方で', 'うえだ', '限りだ'],
+        correct: 0,
+        explain: '「動詞辞書形＋一方だ」置於句尾，表示狀況只朝單一方向持續發展（不斷減少）。',
+      },
+      {
+        grammarId: 7,
+        topic: 'うえに vs うえで vs うえは',
+        jp: '家族とよく相談した（　　　）、返事をします。',
+        zh: '和家人仔細商量過之後，我再給您回覆。',
+        options: ['うえに', 'うえで', 'うえは', 'うちに'],
+        correct: 1,
+        explain: '「動詞た形＋うえで」表示「先完成前項準備（商量），再進行後項行動（回覆）」。',
+      },
+      {
+        grammarId: 6,
+        topic: 'うえに vs うえで vs うえは',
+        jp: '彼は頭がいい（　　　）、スポーツも得意だ。',
+        zh: '他不僅頭腦聰明，而且也很擅長運動。',
+        options: ['うえで', 'うえは', 'うえに', 'くせに'],
+        correct: 2,
+        explain: '「うえに」用來疊加同方向的優點或特質（好上加好），常搭配後項的「も」。',
+      },
+      {
+        grammarId: 16,
+        topic: '限り vs 限りでは',
+        jp: '命がある（　　　）、希望を捨てない。',
+        zh: '只要還活著（只要一息尚存），就絕不放棄希望。',
+        options: ['限りでは', '限り', 'あまり', 'あげく'],
+        correct: 1,
+        explain: '「限り」表示限定條件「只要…就…」。「限りでは」則用於「據我所知／所見的認知範圍」。',
+      },
+      {
+        grammarId: 17,
+        topic: '限り vs 限りでは',
+        jp: '私が調べた（　　　）、そのような記録は残っていない。',
+        zh: '就我所調查的範圍而言，並沒有留下那樣的紀錄。',
+        options: ['限り', '限りでは', 'うえで', 'からには'],
+        correct: 1,
+        explain: '與「調べる・知る・見る・聞く」等認知動詞連用，限定消息來源與認知範圍時用「限りでは」。',
+      },
+      {
+        grammarId: 19,
+        topic: 'がたい vs がち',
+        jp: 'あんなに優しかった彼が嘘をつくなんて、信じ（　　　）。',
+        zh: '那麼溫柔的他竟然會說謊，實在令人難以置信。',
+        options: ['がちだ', 'がたい', 'かける', 'きる'],
+        correct: 1,
+        explain: '「〜がたい」表示心理或常識上「難以…」（如：信じがたい、許しがたい）；「〜がち」表示「常常、容易…」。',
+      },
+      {
+        grammarId: 20,
+        topic: 'がたい vs がち',
+        jp: '冬は空気が乾燥して、風邪をひき（　　　）になる。',
+        zh: '冬天空氣乾燥，很容易感冒。',
+        options: ['がたい', 'がち', 'かねる', 'きり'],
+        correct: 1,
+        explain: '「〜がち」表示容易出現某種負面傾向或狀態（容易感冒、常常遲到等）。',
+      },
+      {
+        grammarId: 24,
+        topic: 'かねる vs かねない',
+        jp: '個人的な質問にはお答えし（　　　）。',
+        zh: '對於私人問題，恕難回答。',
+        options: ['かねます', 'かねない', 'きれない', '得ます'],
+        correct: 0,
+        explain: '「〜かねる（かねます）」用於委婉拒絕，表示基於立場或規定「實在難以做到」。',
+      },
+      {
+        grammarId: 25,
+        topic: 'かねる vs かねない',
+        jp: 'このまま放置すると、大きなトラブルに発展し（　　　）。',
+        zh: '如果就這樣放著不管，搞不好會演變成大麻煩。',
+        options: ['かねる', 'かねない', 'がたい', 'きる'],
+        correct: 1,
+        explain: '「〜かねない」表示「說不定會發生某件不好的事情（負面可能性）」，切勿與委婉拒絕的「かねる」搞混！',
+      },
+      {
+        grammarId: 21,
+        topic: 'かと思うと vs か〜ないかのうちに',
+        jp: 'ドアを開けた（　　　）、犬が勢いよく飛び出してきた。',
+        zh: '剛打開門的瞬間（甚至還沒完全打開），狗就猛然衝了出來。',
+        options: ['か開けないかのうちに', 'かと思えば', 'からといって', 'おかげで'],
+        correct: 0,
+        explain: '「動詞＋か＋ないかのうちに」強調兩個動作之間幾乎沒有時間差（極短 timing）。',
+      },
+      {
+        grammarId: 29,
+        topic: 'からいうと vs からして',
+        jp: 'このレストランは入り口の雰囲気（　　　）高級そうだ。',
+        zh: '這家餐廳光是從門口的氣氛來看就覺得很高級。',
+        options: ['からして', 'からには', 'からこそ', 'からといって'],
+        correct: 0,
+        explain: '「名詞＋からして」舉出最明顯的一點，強調「僅從這一點來看就已經…（其他更不用說）」。',
+      },
+      {
+        grammarId: 31,
+        topic: 'から〜にかけて vs から〜まで',
+        jp: '4月の上旬から中旬（　　　）、桜が見頃を迎えます。',
+        zh: '從4月上旬到中旬這段期間，櫻花會迎來最佳觀賞期。',
+        options: ['にかけて', 'からして', 'かわりに', 'くせに'],
+        correct: 0,
+        explain: '「から〜にかけて」表示大致的時間或空間範圍（如季節、天氣、地區帶），不像「から〜まで」強調精確起訖點。',
+      },
+      {
+        grammarId: 32,
+        topic: 'からには vs からこそ',
+        jp: '社長に任された（　　　）、絶対に成功させたい。',
+        zh: '既然受到社長託付，就一定要讓它成功。',
+        options: ['からには', 'からこそ', 'からといって', 'からして'],
+        correct: 0,
+        explain: '「からには」表示「既然已經如此，就理所當然要…（表達決心與義務）」；「からこそ」則強調「正是因為這個原因才…」。',
+      },
+      {
+        grammarId: 33,
+        topic: 'からには vs からこそ',
+        jp: '失敗を経験した（　　　）、今の成功があるのだ。',
+        zh: '正是因為經歷過失敗，才會有現在的成功。',
+        options: ['からには', 'からこそ', 'からといって', 'くせに'],
+        correct: 1,
+        explain: '強調唯一、最關鍵的原因「正是因為…才…」，因此選「からこそ」。',
+      },
+      {
+        grammarId: 37,
+        topic: 'きり vs きる',
+        jp: '先週、本を貸した（　　　）、まだ返してもらっていない。',
+        zh: '自從上週把書借出去之後，到現在都還沒還我。',
+        options: ['きり', 'きった', 'きれない', '気味'],
+        correct: 0,
+        explain: '「動詞た形＋きり」表示「自從做了那件事之後，就一直沒再有後續動作」。「〜きる」則是「徹底做完」。',
+      },
+      {
+        grammarId: 38,
+        topic: 'きり vs きる / きれる',
+        jp: '長時間のフライトで、すっかり疲れ（　　　）しまった。',
+        zh: '因為長時間的飛行，徹底累壞了。',
+        options: ['きって', 'きりで', 'かけて', 'がちで'],
+        correct: 0,
+        explain: '「疲れ切る（疲れきってしまう）」表示疲勞達到極限（累壞了、筋疲力盡），對應筆記例詞「疲れ切る」。',
+      },
+      {
+        grammarId: 39,
+        topic: 'くせに vs かわりに',
+        jp: '彼は約束を守らない（　　　）、言い訳ばかりする。',
+        zh: '他明明就不遵守約定，卻只會找藉口。',
+        options: ['くせに', 'かわりに', 'おかげで', 'からこそ'],
+        correct: 0,
+        explain: '帶有強烈不滿、責備與輕視的「明明…卻…」，使用「くせに」。',
+      },
+      {
+        grammarId: 41,
+        topic: '〜げ vs だらけ',
+        jp: '試験に落ちたのか、彼は悲し（　　　）な顔で帰ってきた。',
+        zh: '大概是沒考上吧，他一臉悲傷的樣子回來了。',
+        options: ['げ', 'だらけ', 'きり', 'っけ'],
+        correct: 0,
+        explain: '「い形（去い）＋げな」表示看起來流露出某種情感（悲しげな顔＝一臉悲傷的樣子）。',
+      },
+      {
+        grammarId: 42,
+        topic: 'ことなく vs ことに',
+        jp: '手術は問題が起こる（　　　）、無事に終わった。',
+        zh: '手術沒有發生任何問題，順利結束了。',
+        options: ['ことなく', 'ことに', 'ことだ', 'ことか'],
+        correct: 0,
+        explain: '「動詞辞書形＋ことなく」相當於「〜ずに／〜ないで」，表示「沒有發生…就順利…」。',
+      },
+      {
+        grammarId: 43,
+        topic: 'ことに vs ことか',
+        jp: '嬉しい（　　　）、第一志望の大学に合格した。',
+        zh: '令人高興的是，我考上了第一志願的大學。',
+        options: ['ことに', 'ことか', 'ことだ', 'ことから'],
+        correct: 0,
+        explain: '「感情形容詞／た形＋ことに」置於句首，表達說話者主觀的高興、驚訝或遺憾。',
+      },
+      {
+        grammarId: 44,
+        topic: 'ことだから vs ことから',
+        jp: '忘れっぽい彼の（　　　）、きっと傘を電車に忘れたのだろう。',
+        zh: '正因為是健忘的他，一定又把傘忘在電車上了吧。',
+        options: ['ことだから', 'ことから', 'ことには', 'ことか'],
+        correct: 0,
+        explain: '「人の＋ことだから」根據某人平時的個性特徵來做推測；「ことから」則是說明判斷或命名的客觀依據。',
+      },
+      {
+        grammarId: 45,
+        topic: 'ことだから vs ことから',
+        jp: '道が濡れている（　　　）、昨夜雨が降ったことが分かる。',
+        zh: '從路面是濕的這件事來看，可以知道昨晚下過雨。',
+        options: ['ことから', 'ことだから', 'ことだ', 'ことはない'],
+        correct: 0,
+        explain: '根據客觀現象或事實做出判斷，使用「ことから」。',
+      },
+      {
+        grammarId: 47,
+        topic: 'ことだ vs ことはない',
+        jp: '日本語が上手になりたければ、毎日話す（　　　）。',
+        zh: '如果想把日文學好，就應該每天開口說。',
+        options: ['ことだ', 'ことはない', 'ことか', 'ことに'],
+        correct: 0,
+        explain: '「動詞辞書形＋ことだ」用來提出個人忠告或建議（應該…）；「ことはない」則是「沒必要…」。',
+      },
+      {
+        grammarId: 49,
+        topic: 'ことだ vs ことはない',
+        jp: 'ちょっとした風邪だから、そんなに心配する（　　　）。',
+        zh: '只是小感冒而已，用不著那麼擔心。',
+        options: ['ことはない', 'ことだ', 'ことか', 'ことなく'],
+        correct: 0,
+        explain: '「動詞辞書形＋ことはない」表示「沒必要、用不著」，常用來安慰對方。',
+      },
+      {
+        grammarId: 48,
+        topic: 'ことか vs ことになっている',
+        jp: '留学中、どれだけ家族に会いたかった（　　　）。',
+        zh: '留學期間，我是多麼想念家人啊！',
+        options: ['ことか', 'ことになっている', 'ことだ', 'ことから'],
+        correct: 0,
+        explain: '與疑問副詞「どれだけ／どんなに」呼應，表達強烈感嘆時用「ことか」。',
+      },
+      {
+        grammarId: 52,
+        topic: '最中 vs 際',
+        jp: 'お風呂に入っている（　　　）に、宅配便が来た。',
+        zh: '正在洗澡洗到一半的時候，宅配來了。',
+        options: ['最中', '際', '末', '次第'],
+        correct: 0,
+        explain: '「最中に」強調動作正在進行當中突然被意外打斷。「際」則是正式場合的「…的時候」。',
+      },
+      {
+        grammarId: 54,
+        topic: '〜さえ〜ば vs さえ',
+        jp: 'お金（　　　）あれば、幸せになれるとは限らない。',
+        zh: '並不是只要有錢就能變得幸福。',
+        options: ['さえ', 'すら', 'こそ', 'きり'],
+        correct: 0,
+        explain: '「〜さえ〜ば」表示「只要…就…」的唯一條件句型。',
+      },
+      {
+        grammarId: 55,
+        topic: 'ざるをえない vs ずにすむ',
+        jp: '規則なので、嫌でも従わ（　　　）。',
+        zh: '因為是規定，就算討厭也不得不服從。',
+        options: ['ざるをえない', 'ずにすむ', 'っこない', 'かねる'],
+        correct: 0,
+        explain: '「ざるをえない」表示雖然不情願但別無選擇「不得不…」。',
+      },
+      {
+        grammarId: 59,
+        topic: 'ずにはいられない vs ずにすむ',
+        jp: '困っている人を見ると、助け（　　　）。',
+        zh: '一看到有困難的人，就不由得想去幫忙。',
+        options: ['ずにはいられない', 'ずにすむ', 'ざるをえない', 'っこない'],
+        correct: 0,
+        explain: '「ずにはいられない」表示內心情感自然湧現「不由得、忍不住…」。',
+      },
+      {
+        grammarId: 60,
+        topic: 'ずにはいられない vs ずにすむ',
+        jp: '友達がノートを貸してくれたので、自分で買わ（　　　）。',
+        zh: '因為朋友把筆記借給我了，所以我不用自己買就解決了。',
+        options: ['ずにすんだ', 'ずにはいられなかった', 'ざるをえなかった', 'かねなかった'],
+        correct: 0,
+        explain: '「ずにすむ」表示「不用做某件麻煩事或花錢就順利解決了」。',
+      },
+      {
+        grammarId: 64,
+        topic: '〜たところ vs たとたん',
+        jp: '新しいパソコンの電源を入れ（　　　）、画面が真っ暗になった。',
+        zh: '剛一按下新電腦的電源，螢幕就變得一片漆黑。',
+        options: ['たとたん', 'たところ', 'たびに', 'ついでに'],
+        correct: 0,
+        explain: '強調動作剛完成的瞬間緊接著發生突發變化，用「たとたん」。「たところ」側重經過查詢或嘗試後發現的結果。',
+      },
+      {
+        grammarId: 67,
+        topic: 'だらけ vs っぽい',
+        jp: '長い間掃除をしていないので、部屋はゴミ（　　　）だ。',
+        zh: '因為很久沒打掃了，房間裡滿是垃圾。',
+        options: ['だらけ', 'っぽい', '気味', 'がち'],
+        correct: 0,
+        explain: '「名詞＋だらけ」表示「滿是、淨是（負面髒亂或錯誤的事物）」。',
+      },
+      {
+        grammarId: 73,
+        topic: 'だらけ vs っぽい',
+        jp: '彼はもう大人なのに、話し方がまだ子供（　　　）。',
+        zh: '他都已經是大人了，說話方式卻還像個小孩子一樣。',
+        options: ['っぽい', 'だらけ', 'げ', 'つつある'],
+        correct: 0,
+        explain: '「名詞＋っぽい」表示「帶有…的氣質、像…一樣」（如：子供っぽい＝孩子氣）。',
+      },
+      {
+        grammarId: 70,
+        topic: 'っこない vs ざるをえない',
+        jp: '宝くじなんて、どうせ当たり（　　　）よ。',
+        zh: '樂透彩券什麼的，反正根本不可能中獎啦。',
+        options: ['っこない', 'ざるをえない', 'ずにすむ', 'つつある'],
+        correct: 0,
+        explain: '「動詞ます形＋っこない」是口語強烈否定「絕對不可能」。',
+      },
+      {
+        grammarId: 75,
+        topic: 'てからでないと vs て以来',
+        jp: '本人と直接会っ（　　　）、詳しい話はできない。',
+        zh: '如果不先跟本人直接見面的話，沒辦法談詳細的事情。',
+        options: ['てからでないと', 'て以来', 'てでも', 'てたまらない'],
+        correct: 0,
+        explain: '「てからでないと」表示「如果不先完成前項條件，就無法進行後項」。',
+      },
+      {
+        grammarId: 79,
+        topic: 'てでも vs てしょうがない',
+        jp: '徹夜をし（　　　）、明日までにレポートを完成させなければならない。',
+        zh: '就算要熬夜，也必須在明天之前完成報告。',
+        options: ['てでも', 'てしょうがない', 'てならない', 'て以来'],
+        correct: 0,
+        explain: '「動詞て形＋でも」表示不惜採取非常手段「就算…也要…」。',
+      },
+    ];
+
+    // =========================================================================
+    // 5. STATE MANAGEMENT & LOCAL STORAGE
+    // =========================================================================
+    const STORAGE_KEY = 'jlpt_grammar_master_80_state_v1';
+    let appState = {
+      masteredIds: [],
+      reviewIds: [],
+      showFurigana: true,
+      studyFilter: 'all',
+      activeTab: 'study',
+    };
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.masteredIds)) appState.masteredIds = parsed.masteredIds;
+          if (Array.isArray(parsed.reviewIds)) appState.reviewIds = parsed.reviewIds;
+          if (typeof parsed.showFurigana === 'boolean') appState.showFurigana = parsed.showFurigana;
+        }
+      } catch (e) {
+        console.warn('Could not load saved state:', e);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            masteredIds: appState.masteredIds,
+            reviewIds: appState.reviewIds,
+            showFurigana: appState.showFurigana,
+          })
+        );
+      } catch (e) {
+        console.warn('Could not save state:', e);
+      }
+    }
+
+    // =========================================================================
+    // 6. UTILITIES: TOAST, FURIGANA, TTS AUDIO, SHUFFLE
+    // =========================================================================
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.classList.add('hidden');
+      }, 2400);
+    }
+
+    function toggleFurigana() {
+      appState.showFurigana = !appState.showFurigana;
+      applyFuriganaState();
+      saveState();
+    }
+
+    function applyFuriganaState() {
+      const status = document.getElementById('furigana-status');
+      if (appState.showFurigana) {
+        document.body.classList.remove('hide-furigana');
+        if (status) status.textContent = 'ON';
+      } else {
+        document.body.classList.add('hide-furigana');
+        if (status) status.textContent = 'OFF';
+      }
+    }
+
+    function speakText(text) {
+      if (!('speechSynthesis' in window)) {
+        showToast('此瀏覽器不支援語音朗讀');
+        return;
+      }
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'ja-JP';
+        utter.rate = 0.92;
+        window.speechSynthesis.speak(utter);
+      } catch (e) {
+        showToast('無法播放語音');
+      }
+    }
+
+    function speakExample(grammarId, exampleIdx) {
+      const item = grammarData.find((g) => g.id === grammarId);
+      if (item && item.examples[exampleIdx]) {
+        speakText(item.examples[exampleIdx].plain);
+      }
+    }
+
+    function shuffleArray(arr) {
+      const copy = arr.slice();
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function updateCounters() {
+      const masteredEl = document.getElementById('mastered-count');
+      const reviewEl = document.getElementById('review-count');
+      if (masteredEl) masteredEl.textContent = appState.masteredIds.length;
+      if (reviewEl) reviewEl.textContent = appState.reviewIds.length;
+    }
+
+    function addReviewId(id) {
+      if (!appState.reviewIds.includes(id)) {
+        appState.reviewIds.push(id);
+        saveState();
+        updateCounters();
+      }
+    }
+
+    function removeReviewId(id) {
+      if (appState.reviewIds.includes(id)) {
+        appState.reviewIds = appState.reviewIds.filter((x) => x !== id);
+        saveState();
+        updateCounters();
+      }
+    }
+
+    // =========================================================================
+    // 7. NAVIGATION TABS
+    // =========================================================================
+    function switchTab(tabName) {
+      appState.activeTab = tabName;
+      const views = ['study', 'flash', 'drag', 'test'];
+      views.forEach((v) => {
+        const section = document.getElementById(`view-${v}`);
+        const btn = document.getElementById(`tab-${v}`);
+        if (!section || !btn) return;
+        if (v === tabName) {
+          section.classList.remove('hidden');
+          btn.classList.remove('border-transparent', 'text-slate-600', 'font-medium');
+          btn.classList.add('border-indigo-600', 'text-indigo-600', 'font-semibold');
+        } else {
+          section.classList.add('hidden');
+          btn.classList.remove('border-indigo-600', 'text-indigo-600', 'font-semibold');
+          btn.classList.add('border-transparent', 'text-slate-600', 'font-medium');
+        }
+      });
+
+      if (tabName === 'study') {
+        renderStudyCards();
+      } else if (tabName === 'flash') {
+        if (flashState.deck.length === 0) initFlashcards();
+        else renderFlashcard();
+      } else if (tabName === 'drag' && dragState.questions.length === 0) {
+        resetDragDeckAndStart();
+      } else if (tabName === 'test') {
+        renderScramble();
+        renderNuance();
+      }
+    }
+
+    function switchTestSubtab(subtab) {
+      const panelScramble = document.getElementById('panel-scramble');
+      const panelNuance = document.getElementById('panel-nuance');
+      const btnScramble = document.getElementById('subtab-scramble');
+      const btnNuance = document.getElementById('subtab-nuance');
+
+      if (subtab === 'scramble') {
+        panelScramble.classList.remove('hidden');
+        panelNuance.classList.add('hidden');
+        btnScramble.className = 'px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 text-white transition';
+        btnNuance.className = 'px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-stone-100 transition';
+        renderScramble();
+      } else {
+        panelScramble.classList.add('hidden');
+        panelNuance.classList.remove('hidden');
+        btnNuance.className = 'px-4 py-2 rounded-xl text-sm font-bold bg-rose-600 text-white transition';
+        btnScramble.className = 'px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-stone-100 transition';
+        renderNuance();
+      }
+    }
+
+    // =========================================================================
+    // 8. TAB 1: STUDY CARDS
+    // =========================================================================
+    function setStudyFilter(filter) {
+      appState.studyFilter = filter;
+      const pills = ['all', 'part1', 'part2', 'part3', 'part4', 'unmastered', 'review'];
+      pills.forEach((p) => {
+        const el = document.getElementById(`filter-${p}`);
+        if (!el) return;
+        if (p === filter) {
+          el.className = 'filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white';
+        } else {
+          el.className = 'filter-pill px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-stone-100 text-slate-700 hover:bg-stone-200';
+        }
+      });
+      renderStudyCards();
+    }
+
+    function toggleMastered(id) {
+      if (appState.masteredIds.includes(id)) {
+        appState.masteredIds = appState.masteredIds.filter((x) => x !== id);
+        showToast('已取消掌握標記');
+      } else {
+        appState.masteredIds.push(id);
+        removeReviewId(id);
+        showToast('太棒了！已標記為熟練掌握');
+      }
+      saveState();
+      updateCounters();
+      renderStudyCards();
+    }
+
+    function renderStudyCards() {
+      const container = document.getElementById('study-cards-container');
+      const searchInput = document.getElementById('study-search');
+      if (!container) return;
+
+      const q = (searchInput ? searchInput.value : '').trim().toLowerCase();
+
+      const filtered = grammarData.filter((item) => {
+        if (appState.studyFilter === 'part1' && item.id > 20) return false;
+        if (appState.studyFilter === 'part2' && (item.id <= 20 || item.id > 40)) return false;
+        if (appState.studyFilter === 'part3' && (item.id <= 40 || item.id > 60)) return false;
+        if (appState.studyFilter === 'part4' && item.id <= 60) return false;
+        if (appState.studyFilter === 'unmastered' && appState.masteredIds.includes(item.id)) return false;
+        if (appState.studyFilter === 'review' && !appState.reviewIds.includes(item.id)) return false;
+
+        if (q) {
+          const hay = `${item.id} ${item.pattern} ${item.reading} ${item.meaningZh} ${item.meaningEn} ${item.nuanceNote}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full bg-white rounded-2xl p-10 text-center border border-stone-200 text-slate-500">
+            <div class="text-3xl mb-2">📝</div>
+            <div class="font-semibold text-slate-700">目前沒有符合條件的文法卡片</div>
+            <div class="text-xs mt-1">請嘗試清除搜尋關鍵字或切換上方篩選分類。</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered
+        .map((item) => {
+          const isMastered = appState.masteredIds.includes(item.id);
+          const isReview = appState.reviewIds.includes(item.id);
+          const badgeColors =
+            item.id <= 20
+              ? 'bg-indigo-100 text-indigo-800'
+              : item.id <= 40
+              ? 'bg-violet-100 text-violet-800'
+              : item.id <= 60
+              ? 'bg-sky-100 text-sky-800'
+              : 'bg-teal-100 text-teal-800';
+
+          const examplesHtml = item.examples
+            .map(
+              (ex, idx) => `
+              <div class="bg-stone-50 rounded-xl p-3 border border-stone-200/80 flex items-start justify-between gap-2.5">
+                <div class="space-y-1 flex-1 min-w-0">
+                  <div class="text-sm sm:text-[15px] text-slate-900 leading-relaxed">${ex.jp}</div>
+                  <div class="text-xs text-slate-600">${ex.zh}</div>
+                </div>
+                <button
+                  onclick="speakExample(${item.id}, ${idx})"
+                  class="shrink-0 w-8 h-8 rounded-lg bg-white hover:bg-indigo-50 border border-stone-200 text-indigo-600 flex items-center justify-center text-sm shadow-sm transition"
+                  title="朗讀例句"
+                >
+                  🔊
+                </button>
+              </div>
+            `
+            )
+            .join('');
+
+          return `
+            <article class="bg-white rounded-2xl p-5 border ${
+              isMastered ? 'border-emerald-300 ring-1 ring-emerald-100' : isReview ? 'border-amber-300 ring-1 ring-amber-100' : 'border-stone-200'
+            } shadow-sm flex flex-col justify-between gap-4">
+              <div class="space-y-3">
+                <!-- Top Row -->
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex items-center gap-2.5 flex-wrap">
+                    <span class="w-7 h-7 rounded-lg ${badgeColors} text-xs font-bold flex items-center justify-center shrink-0">
+                      ${item.id}
+                    </span>
+                    <h3 class="text-lg sm:text-xl font-bold text-slate-900 leading-snug">
+                      ${item.titleRuby}
+                    </h3>
+                    ${
+                      isReview
+                        ? '<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold">⚠️ 待複習</span>'
+                        : ''
+                    }
+                  </div>
+                  <button
+                    onclick="toggleMastered(${item.id})"
+                    class="shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition ${
+                      isMastered
+                        ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700'
+                        : 'bg-stone-50 text-slate-600 border-stone-200 hover:bg-stone-100'
+                    }"
+                  >
+                    ${isMastered ? '✓ 已掌握' : '標記掌握'}
+                  </button>
+                </div>
+
+                <!-- Meanings -->
+                <div class="space-y-1">
+                  <div class="text-sm sm:text-base font-bold text-indigo-900">${item.meaningZh}</div>
+                  <div class="text-xs text-slate-500">${item.meaningEn}</div>
+                </div>
+
+                <!-- Connection -->
+                <div class="text-xs bg-indigo-50/70 text-indigo-900 px-3 py-2 rounded-xl border border-indigo-100">
+                  <span class="font-bold">接續：</span>${item.connection}
+                </div>
+
+                <!-- Nuance Note -->
+                <div class="text-xs sm:text-sm text-slate-700 leading-relaxed bg-amber-50/60 px-3 py-2.5 rounded-xl border border-amber-100">
+                  <span class="font-bold text-amber-900">💡 筆記重點：</span>${item.nuanceNote}
+                </div>
+
+                <!-- Examples -->
+                <div class="space-y-2 pt-1">
+                  ${examplesHtml}
+                </div>
+              </div>
+            </article>
+          `;
+        })
+        .join('');
+    }
+
+    // =========================================================================
+    // 8B. TAB 2: 3D FLASHCARD MODE
+    // =========================================================================
+    let flashState = {
+      deck: [],
+      index: 0,
+      flipped: false,
+      direction: 'jp2zh', // 'jp2zh' | 'zh2jp'
+    };
+
+    function getFlashFilteredList() {
+      const sel = document.getElementById('flash-range-select');
+      const range = sel ? sel.value : 'all';
+      return grammarData.filter((item) => {
+        if (range === 'part1') return item.id <= 20;
+        if (range === 'part2') return item.id > 20 && item.id <= 40;
+        if (range === 'part3') return item.id > 40 && item.id <= 60;
+        if (range === 'part4') return item.id > 60;
+        if (range === 'unmastered') return !appState.masteredIds.includes(item.id);
+        if (range === 'review') return appState.reviewIds.includes(item.id);
+        return true;
+      });
+    }
+
+    function initFlashcards() {
+      const list = getFlashFilteredList();
+      flashState.deck = list.length > 0 ? list.slice() : grammarData.slice();
+      if (list.length === 0) {
+        showToast('此篩選分類目前沒有卡片，已顯示全部 80 條文法');
+        const sel = document.getElementById('flash-range-select');
+        if (sel) sel.value = 'all';
+      }
+      flashState.index = 0;
+      flashState.flipped = false;
+      renderFlashcard();
+    }
+
+    function shuffleFlashcards() {
+      flashState.deck = shuffleArray(flashState.deck);
+      flashState.index = 0;
+      flashState.flipped = false;
+      showToast('已隨機洗牌閃卡順序');
+      renderFlashcard();
+    }
+
+    function toggleFlashDirection() {
+      flashState.direction = flashState.direction === 'jp2zh' ? 'zh2jp' : 'jp2zh';
+      flashState.flipped = false;
+      const btn = document.getElementById('flash-dir-btn');
+      if (btn) {
+        btn.textContent =
+          flashState.direction === 'jp2zh'
+            ? '正面：日文文法 → 背面：中文'
+            : '正面：中文意思 → 背面：日文';
+      }
+      renderFlashcard();
+    }
+
+    function flipFlashcard() {
+      flashState.flipped = !flashState.flipped;
+      const inner = document.getElementById('flashcard-inner');
+      if (inner) {
+        inner.classList.toggle('is-flipped', flashState.flipped);
+      }
+    }
+
+    function nextFlashcard() {
+      if (flashState.deck.length === 0) return;
+      flashState.index = (flashState.index + 1) % flashState.deck.length;
+      flashState.flipped = false;
+      renderFlashcard();
+    }
+
+    function prevFlashcard() {
+      if (flashState.deck.length === 0) return;
+      flashState.index = (flashState.index - 1 + flashState.deck.length) % flashState.deck.length;
+      flashState.flipped = false;
+      renderFlashcard();
+    }
+
+    function toggleFlashMastered() {
+      const item = flashState.deck[flashState.index];
+      if (!item) return;
+      toggleMastered(item.id);
+      renderFlashcard();
+    }
+
+    function toggleFlashReview() {
+      const item = flashState.deck[flashState.index];
+      if (!item) return;
+      if (appState.reviewIds.includes(item.id)) {
+        removeReviewId(item.id);
+        showToast('已從複習清單移除');
+      } else {
+        addReviewId(item.id);
+        showToast('已加入「⚠️ 錯題複習」');
+      }
+      renderFlashcard();
+    }
+
+    function speakFlashFront() {
+      const item = flashState.deck[flashState.index];
+      if (!item) return;
+      speakText(item.examples[0] ? item.examples[0].plain : item.pattern);
+    }
+
+    function speakFlashExample() {
+      const item = flashState.deck[flashState.index];
+      if (item && item.examples[0]) {
+        speakText(item.examples[0].plain);
+      }
+    }
+
+    function renderFlashcard() {
+      if (flashState.deck.length === 0) return;
+      const item = flashState.deck[flashState.index];
+      const inner = document.getElementById('flashcard-inner');
+      if (inner) {
+        inner.classList.toggle('is-flipped', flashState.flipped);
+      }
+
+      document.getElementById('flash-pos').textContent = flashState.index + 1;
+      document.getElementById('flash-total').textContent = flashState.deck.length;
+      const pct = ((flashState.index + 1) / flashState.deck.length) * 100;
+      document.getElementById('flash-progress-bar').style.width = `${pct}%`;
+
+      const isMastered = appState.masteredIds.includes(item.id);
+      const isReview = appState.reviewIds.includes(item.id);
+
+      const statusBadge = document.getElementById('flash-status-badge');
+      if (statusBadge) {
+        if (isMastered) {
+          statusBadge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 whitespace-nowrap';
+          statusBadge.textContent = '✓ 已掌握';
+        } else if (isReview) {
+          statusBadge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 whitespace-nowrap';
+          statusBadge.textContent = '⚠️ 待複習';
+        } else {
+          statusBadge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-stone-100 text-slate-600 whitespace-nowrap';
+          statusBadge.textContent = '學習中';
+        }
+      }
+
+      const masterBtn = document.getElementById('flash-master-btn');
+      if (masterBtn) {
+        masterBtn.textContent = isMastered ? '✓ 已掌握（取消）' : '✓ 標記掌握';
+      }
+      const revBtn = document.getElementById('flash-review-btn');
+      if (revBtn) {
+        revBtn.textContent = isReview ? '⚠️ 已在複習中' : '⚠️ 標記複習';
+      }
+
+      document.getElementById('flash-front-num').textContent = `筆記 #${item.id}`;
+      const frontMain = document.getElementById('flash-front-main');
+      const frontSub = document.getElementById('flash-front-sub');
+      const frontHint = document.getElementById('flash-front-hint');
+
+      if (flashState.direction === 'jp2zh') {
+        frontMain.innerHTML = item.titleRuby;
+        frontSub.textContent = item.reading;
+        frontHint.textContent = '想一想中文意思與接續規則，再點擊翻面！';
+      } else {
+        frontMain.textContent = item.meaningZh;
+        frontSub.textContent = item.meaningEn;
+        frontHint.textContent = '想一想對應的日文文法句型，再點擊翻面！';
+      }
+
+      document.getElementById('flash-back-title').innerHTML = `#${item.id} ${item.titleRuby}`;
+      document.getElementById('flash-back-zh').textContent = item.meaningZh;
+      document.getElementById('flash-back-en').textContent = item.meaningEn;
+      document.getElementById('flash-back-conn').innerHTML = `<strong>接續：</strong>${item.connection}`;
+      document.getElementById('flash-back-note').innerHTML = `<strong>💡 筆記重點：</strong>${item.nuanceNote}`;
+      if (item.examples[0]) {
+        document.getElementById('flash-back-ex-jp').innerHTML = item.examples[0].jp;
+        document.getElementById('flash-back-ex-zh').textContent = item.examples[0].zh;
+      }
+    }
+
+    // Keyboard shortcuts for Flashcards
+    document.addEventListener('keydown', (e) => {
+      if (appState.activeTab !== 'flash') return;
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA')) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        flipFlashcard();
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        nextFlashcard();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        prevFlashcard();
+      }
+    });
+
+    // =========================================================================
+    // 9. TAB 3: DRAG & DROP + TAP-TO-PLACE (FULL NON-REPEATING PASS COVERAGE)
+    // =========================================================================
+    let dragState = {
+      questions: [],
+      chips: [], // { chipId, text, usedByQIdx }
+      placements: {}, // qIdx -> chipId
+      selectedChipId: null,
+      checked: false,
+      deckQueue: [], // remaining unshown question objects in current pass
+      seenIds: [], // unique IDs shown so far in current pass
+      totalInRange: 80,
+    };
+
+    function getDragRangePool() {
+      const rangeSelect = document.getElementById('drag-range-select');
+      const range = rangeSelect ? rangeSelect.value : 'all';
+      if (range === 'part1') return dragPool.filter((q) => q.id <= 20);
+      if (range === 'part2') return dragPool.filter((q) => q.id > 20 && q.id <= 40);
+      if (range === 'part3') return dragPool.filter((q) => q.id > 40 && q.id <= 60);
+      if (range === 'part4') return dragPool.filter((q) => q.id > 60);
+      return dragPool.slice();
+    }
+
+    function resetDragDeckAndStart() {
+      const pool = getDragRangePool();
+      dragState.deckQueue = shuffleArray(pool);
+      dragState.seenIds = [];
+      dragState.totalInRange = pool.length;
+      dealNextDragRound();
+    }
+
+    function dealNextDragRound() {
+      const pool = getDragRangePool();
+      dragState.totalInRange = pool.length;
+
+      if (dragState.deckQueue.length === 0) {
+        dragState.deckQueue = shuffleArray(pool);
+        dragState.seenIds = [];
+        showToast('🎉 已完成一輪全部題目！開始新一輪不重複練習');
+      }
+
+      const picked = dragState.deckQueue.splice(0, 5);
+      picked.forEach((q) => {
+        if (!dragState.seenIds.includes(q.id)) {
+          dragState.seenIds.push(q.id);
+        }
+      });
+
+      const chips = shuffleArray(
+        picked.map((q, idx) => ({
+          chipId: `chip-${idx}-${q.id}`,
+          text: q.answer,
+          usedByQIdx: null,
+        }))
+      );
+
+      dragState.questions = picked;
+      dragState.chips = chips;
+      dragState.placements = {};
+      dragState.selectedChipId = null;
+      dragState.checked = false;
+
+      const covText = document.getElementById('drag-coverage-text');
+      const covBar = document.getElementById('drag-coverage-bar');
+      if (covText) {
+        covText.textContent = `${dragState.seenIds.length} / ${dragState.totalInRange}`;
+      }
+      if (covBar && dragState.totalInRange > 0) {
+        const pct = Math.min(100, (dragState.seenIds.length / dragState.totalInRange) * 100);
+        covBar.style.width = `${pct}%`;
+      }
+
+      const scoreBanner = document.getElementById('drag-score-banner');
+      if (scoreBanner) {
+        scoreBanner.className = 'text-sm font-semibold text-slate-600';
+        scoreBanner.textContent = '填完 5 題後，點擊右側按鈕批改！';
+      }
+
+      renderDragUI();
+    }
+
+    function resetDragCurrentRound() {
+      dragState.chips.forEach((c) => (c.usedByQIdx = null));
+      dragState.placements = {};
+      dragState.selectedChipId = null;
+      dragState.checked = false;
+
+      const scoreBanner = document.getElementById('drag-score-banner');
+      if (scoreBanner) {
+        scoreBanner.className = 'text-sm font-semibold text-slate-600';
+        scoreBanner.textContent = '已清空，請重新拖曳或點擊填入！';
+      }
+      renderDragUI();
+    }
+
+    function selectWordChip(chipId) {
+      if (dragState.checked) return;
+      if (dragState.selectedChipId === chipId) {
+        dragState.selectedChipId = null;
+      } else {
+        dragState.selectedChipId = chipId;
+      }
+      renderDragUI();
+    }
+
+    function placeChipInSlot(chipId, qIdx) {
+      if (dragState.checked) return;
+      const chip = dragState.chips.find((c) => c.chipId === chipId);
+      if (!chip) return;
+
+      // If this slot already has a chip, free it
+      const existingChipId = dragState.placements[qIdx];
+      if (existingChipId) {
+        const existingChip = dragState.chips.find((c) => c.chipId === existingChipId);
+        if (existingChip) existingChip.usedByQIdx = null;
+      }
+
+      // If this chip was used in another slot, remove it there
+      if (chip.usedByQIdx !== null && chip.usedByQIdx !== undefined) {
+        delete dragState.placements[chip.usedByQIdx];
+      }
+
+      dragState.placements[qIdx] = chipId;
+      chip.usedByQIdx = qIdx;
+      dragState.selectedChipId = null;
+      renderDragUI();
+    }
+
+    function handleDropZoneClick(qIdx) {
+      if (dragState.checked) return;
+      if (dragState.selectedChipId) {
+        placeChipInSlot(dragState.selectedChipId, qIdx);
+      } else if (dragState.placements[qIdx]) {
+        // Return chip to bank
+        const chipId = dragState.placements[qIdx];
+        const chip = dragState.chips.find((c) => c.chipId === chipId);
+        if (chip) chip.usedByQIdx = null;
+        delete dragState.placements[qIdx];
+        renderDragUI();
+      } else {
+        showToast('請先點選上方詞庫中的一張文法卡片！');
+      }
+    }
+
+    function onChipDragStart(e, chipId) {
+      if (dragState.checked) {
+        e.preventDefault();
+        return;
+      }
+      e.dataTransfer.setData('text/plain', chipId);
+      dragState.selectedChipId = chipId;
+    }
+
+    function onSlotDragOver(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('drag-over');
+    }
+
+    function onSlotDragLeave(e) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+
+    function onSlotDrop(e, qIdx) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      const chipId = e.dataTransfer.getData('text/plain') || dragState.selectedChipId;
+      if (chipId) {
+        placeChipInSlot(chipId, qIdx);
+      }
+    }
+
+    function checkDragAnswers() {
+      if (dragState.questions.length === 0) return;
+      let correctCount = 0;
+
+      dragState.questions.forEach((q, idx) => {
+        const chipId = dragState.placements[idx];
+        const chip = dragState.chips.find((c) => c.chipId === chipId);
+        if (chip && chip.text === q.answer) {
+          correctCount++;
+          removeReviewId(q.id);
+        } else {
+          addReviewId(q.id);
+        }
+      });
+
+      dragState.checked = true;
+      const scoreBanner = document.getElementById('drag-score-banner');
+      if (scoreBanner) {
+        if (correctCount === dragState.questions.length) {
+          scoreBanner.className = 'text-sm sm:text-base font-bold text-emerald-700';
+          scoreBanner.textContent = `🎉 全對！${correctCount} / ${dragState.questions.length} 題完全正確！`;
+        } else {
+          scoreBanner.className = 'text-sm sm:text-base font-bold text-amber-700';
+          scoreBanner.textContent = `答對 ${correctCount} / ${dragState.questions.length} 題（錯題已自動加入「⚠️ 錯題複習」）`;
+        }
+      }
+      renderDragUI();
+    }
+
+    function speakDragSentence(qIdx) {
+      const q = dragState.questions[qIdx];
+      if (!q) return;
+      speakText(`${q.before}${q.answer}${q.after}`);
+    }
+
+    function renderDragUI() {
+      const bankEl = document.getElementById('drag-word-bank');
+      const listEl = document.getElementById('drag-questions-list');
+      const hintEl = document.getElementById('drag-selection-hint');
+      if (!bankEl || !listEl) return;
+
+      const selectedChip = dragState.chips.find((c) => c.chipId === dragState.selectedChipId);
+      if (hintEl) {
+        hintEl.textContent = selectedChip ? `已選取：「${selectedChip.text}」→ 請點擊句子空格` : '尚未選取卡片';
+      }
+
+      // Render Bank
+      const unusedChips = dragState.chips.filter((c) => c.usedByQIdx === null);
+      if (unusedChips.length === 0) {
+        bankEl.innerHTML = '<span class="text-xs text-indigo-500 italic py-2">所有卡片已填入空格中！</span>';
+      } else {
+        bankEl.innerHTML = unusedChips
+          .map((c) => {
+            const isSel = dragState.selectedChipId === c.chipId;
+            return `
+              <button
+                type="button"
+                draggable="${!dragState.checked}"
+                ondragstart="onChipDragStart(event, '${c.chipId}')"
+                onclick="selectWordChip('${c.chipId}')"
+                class="word-chip px-3.5 py-2 rounded-xl text-sm font-bold border shadow-sm cursor-grab active:cursor-grabbing ${
+                  isSel
+                    ? 'selected-chip bg-indigo-600 text-white border-indigo-700'
+                    : 'bg-white text-indigo-900 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50'
+                }"
+              >
+                ${c.text}
+              </button>
+            `;
+          })
+          .join('');
+      }
+
+      // Render Questions
+      listEl.innerHTML = dragState.questions
+        .map((q, idx) => {
+          const placedChipId = dragState.placements[idx];
+          const placedChip = dragState.chips.find((c) => c.chipId === placedChipId);
+          const isCorrect = dragState.checked && placedChip && placedChip.text === q.answer;
+          const isWrong = dragState.checked && (!placedChip || placedChip.text !== q.answer);
+
+          let slotStyle = 'border-dashed border-indigo-300 bg-indigo-50/50 text-indigo-400';
+          if (placedChip && !dragState.checked) {
+            slotStyle = 'border-solid border-indigo-500 bg-indigo-600 text-white shadow-sm';
+          } else if (isCorrect) {
+            slotStyle = 'border-solid border-emerald-500 bg-emerald-600 text-white';
+          } else if (isWrong) {
+            slotStyle = 'border-solid border-rose-500 bg-rose-100 text-rose-800';
+          }
+
+          const gItem = grammarData.find((g) => g.id === q.id);
+
+          return `
+            <div class="bg-white rounded-2xl p-4 sm:p-5 border ${
+              isCorrect ? 'border-emerald-300' : isWrong ? 'border-rose-300' : 'border-stone-200'
+            } shadow-sm space-y-2.5">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-start gap-2.5 flex-1">
+                  <span class="w-6 h-6 rounded-full bg-stone-100 text-slate-600 text-xs font-bold flex items-center justify-center shrink-0 mt-1">
+                    ${idx + 1}
+                  </span>
+                  <div class="text-base sm:text-lg font-medium text-slate-900 leading-loose flex flex-wrap items-center gap-x-1 gap-y-2">
+                    <span>${q.before}</span>
+                    <button
+                      type="button"
+                      onclick="handleDropZoneClick(${idx})"
+                      ondragover="onSlotDragOver(event)"
+                      ondragleave="onSlotDragLeave(event)"
+                      ondrop="onSlotDrop(event, ${idx})"
+                      class="drop-zone inline-flex items-center justify-center px-3 py-1 rounded-xl border-2 text-sm sm:text-base font-bold align-middle ${slotStyle}"
+                    >
+                      ${placedChip ? placedChip.text : '（　　）'}
+                    </button>
+                    <span>${q.after}</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onclick="speakDragSentence(${idx})"
+                  class="shrink-0 w-8 h-8 rounded-lg bg-stone-50 hover:bg-indigo-50 border border-stone-200 text-indigo-600 flex items-center justify-center text-sm"
+                  title="聽完整句發音"
+                >
+                  🔊
+                </button>
+              </div>
+              <div class="pl-8 text-xs sm:text-sm text-slate-600">${q.zh}</div>
+              ${
+                dragState.checked
+                  ? `
+                  <div class="ml-8 p-3 rounded-xl text-xs sm:text-sm ${
+                    isCorrect ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' : 'bg-rose-50 text-rose-900 border border-rose-200'
+                  }">
+                    <div class="font-bold">
+                      ${isCorrect ? '✅ 正確！' : `❌ 正確答案：${q.answer}`}
+                    </div>
+                    ${gItem ? `<div class="mt-1 text-slate-700"><strong>#${gItem.id} ${gItem.pattern}</strong>：${gItem.meaningZh}</div>` : ''}
+                  </div>
+                `
+                  : ''
+              }
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    // =========================================================================
+    // 10. TAB 4A: SENTENCE SCRAMBLE (80 ITEMS + RANGE FILTER)
+    // =========================================================================
+    let scrambleState = {
+      list: scrambleQuestions.slice(),
+      index: 0,
+      bank: [], // { idx, text, used }
+      answer: [], // array of bank idx
+      checked: false,
+    };
+
+    function setScrambleRange() {
+      const sel = document.getElementById('scramble-range-select');
+      const range = sel ? sel.value : 'all';
+      if (range === 'part1') {
+        scrambleState.list = scrambleQuestions.filter((q) => q.grammarId <= 20);
+      } else if (range === 'part2') {
+        scrambleState.list = scrambleQuestions.filter((q) => q.grammarId > 20 && q.grammarId <= 40);
+      } else if (range === 'part3') {
+        scrambleState.list = scrambleQuestions.filter((q) => q.grammarId > 40 && q.grammarId <= 60);
+      } else if (range === 'part4') {
+        scrambleState.list = scrambleQuestions.filter((q) => q.grammarId > 60);
+      } else {
+        scrambleState.list = scrambleQuestions.slice();
+      }
+      loadScrambleItem(0);
+    }
+
+    function shuffleScrambleList() {
+      scrambleState.list = shuffleArray(scrambleState.list);
+      showToast('已打亂句子重組題目順序');
+      loadScrambleItem(0);
+    }
+
+    function loadScrambleItem(idx) {
+      if (scrambleState.list.length === 0) return;
+      scrambleState.index = (idx + scrambleState.list.length) % scrambleState.list.length;
+      const item = scrambleState.list[scrambleState.index];
+      scrambleState.bank = shuffleArray(item.chunks.map((text, i) => ({ idx: i, text, used: false })));
+      scrambleState.answer = [];
+      scrambleState.checked = false;
+      renderScramble();
+    }
+
+    function resetCurrentScramble() {
+      scrambleState.bank.forEach((b) => (b.used = false));
+      scrambleState.answer = [];
+      scrambleState.checked = false;
+      renderScramble();
+    }
+
+    function prevScramble() {
+      loadScrambleItem(scrambleState.index - 1);
+    }
+
+    function nextScramble() {
+      loadScrambleItem(scrambleState.index + 1);
+    }
+
+    function pickScrambleChunk(bankArrayIdx) {
+      if (scrambleState.checked) return;
+      const chunk = scrambleState.bank[bankArrayIdx];
+      if (!chunk || chunk.used) return;
+      chunk.used = true;
+      scrambleState.answer.push(bankArrayIdx);
+      renderScramble();
+    }
+
+    function removeScrambleChunk(answerPos) {
+      if (scrambleState.checked) return;
+      const bankArrayIdx = scrambleState.answer[answerPos];
+      if (scrambleState.bank[bankArrayIdx]) {
+        scrambleState.bank[bankArrayIdx].used = false;
+      }
+      scrambleState.answer.splice(answerPos, 1);
+      renderScramble();
+    }
+
+    function checkScramble() {
+      const item = scrambleState.list[scrambleState.index];
+      const userSentence = scrambleState.answer.map((bIdx) => scrambleState.bank[bIdx].text).join('');
+      const correctSentence = item.chunks.join('');
+      const fb = document.getElementById('scramble-feedback');
+      if (!fb) return;
+
+      if (scrambleState.answer.length < item.chunks.length) {
+        showToast('請先將所有詞塊都排入上方句子中！');
+        return;
+      }
+
+      scrambleState.checked = true;
+      fb.classList.remove('hidden');
+
+      if (userSentence === correctSentence) {
+        removeReviewId(item.grammarId);
+        fb.className = 'rounded-xl p-4 text-sm bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-1.5';
+        fb.innerHTML = `
+          <div class="font-bold flex items-center justify-between">
+            <span>🎉 語順完全正確！</span>
+            <button onclick="speakCurrentScramble()" class="px-2.5 py-1 rounded-lg bg-white border border-emerald-200 text-emerald-700 text-xs font-bold hover:bg-emerald-100">🔊 聽發音</button>
+          </div>
+          <div class="font-medium text-base text-slate-900">${correctSentence}</div>
+        `;
+      } else {
+        addReviewId(item.grammarId);
+        fb.className = 'rounded-xl p-4 text-sm bg-rose-50 border border-rose-200 text-rose-900 space-y-1.5';
+        fb.innerHTML = `
+          <div class="font-bold flex items-center justify-between">
+            <span>❌ 語順有點小誤差喔！</span>
+            <button onclick="speakCurrentScramble()" class="px-2.5 py-1 rounded-lg bg-white border border-rose-200 text-rose-700 text-xs font-bold hover:bg-rose-100">🔊 聽正確發音</button>
+          </div>
+          <div class="text-xs text-slate-600">你的排列：${userSentence}</div>
+          <div class="font-bold text-base text-slate-900">正確句子：${correctSentence}</div>
+        `;
+      }
+    }
+
+    function speakCurrentScramble() {
+      const item = scrambleState.list[scrambleState.index];
+      if (item) speakText(item.chunks.join(''));
+    }
+
+    function renderScramble() {
+      const item = scrambleState.list[scrambleState.index];
+      if (!item) return;
+
+      document.getElementById('scramble-index').textContent = scrambleState.index + 1;
+      document.getElementById('scramble-total').textContent = scrambleState.list.length;
+      document.getElementById('scramble-grammar-tag').textContent = `重點文法：${item.tag}`;
+      document.getElementById('scramble-zh').textContent = item.zh;
+      document.getElementById('scramble-en').textContent = item.en;
+
+      const ansZone = document.getElementById('scramble-answer-zone');
+      const bankZone = document.getElementById('scramble-bank-zone');
+      const fb = document.getElementById('scramble-feedback');
+
+      if (!scrambleState.checked && fb) {
+        fb.classList.add('hidden');
+      }
+
+      if (scrambleState.answer.length === 0) {
+        ansZone.innerHTML = '<span class="text-xs text-indigo-400">請依序點擊下方的詞塊…</span>';
+      } else {
+        ansZone.innerHTML = scrambleState.answer
+          .map(
+            (bIdx, pos) => `
+            <button
+              type="button"
+              onclick="removeScrambleChunk(${pos})"
+              class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-sm transition"
+            >
+              ${scrambleState.bank[bIdx].text}
+            </button>
+          `
+          )
+          .join('');
+      }
+
+      bankZone.innerHTML = scrambleState.bank
+        .map((chunk, bIdx) => {
+          if (chunk.used) {
+            return `<span class="px-3.5 py-2 rounded-xl bg-stone-100 text-stone-300 text-sm font-bold border border-dashed border-stone-200 select-none">${chunk.text}</span>`;
+          }
+          return `
+            <button
+              type="button"
+              onclick="pickScrambleChunk(${bIdx})"
+              class="px-3.5 py-2 rounded-xl bg-white hover:bg-indigo-50 text-slate-800 border border-stone-300 hover:border-indigo-400 text-sm font-bold shadow-sm transition"
+            >
+              ${chunk.text}
+            </button>
+          `;
+        })
+        .join('');
+    }
+
+    // =========================================================================
+    // 11. TAB 3B: NUANCE CONTRAST QUIZ
+    // =========================================================================
+    let nuanceState = {
+      index: 0,
+      selectedOpt: null,
+    };
+
+    function prevNuance() {
+      nuanceState.index = (nuanceState.index - 1 + nuanceQuestions.length) % nuanceQuestions.length;
+      nuanceState.selectedOpt = null;
+      renderNuance();
+    }
+
+    function nextNuance() {
+      nuanceState.index = (nuanceState.index + 1) % nuanceQuestions.length;
+      nuanceState.selectedOpt = null;
+      renderNuance();
+    }
+
+    function selectNuanceOption(optIdx) {
+      if (nuanceState.selectedOpt !== null) return;
+      nuanceState.selectedOpt = optIdx;
+      const q = nuanceQuestions[nuanceState.index];
+      if (optIdx === q.correct) {
+        removeReviewId(q.grammarId);
+      } else {
+        addReviewId(q.grammarId);
+      }
+      renderNuance();
+    }
+
+    function speakCurrentNuance() {
+      const q = nuanceQuestions[nuanceState.index];
+      if (!q) return;
+      const full = q.jp.replace('（　　　）', q.options[q.correct]);
+      speakText(full);
+    }
+
+    function renderNuance() {
+      const q = nuanceQuestions[nuanceState.index];
+      if (!q) return;
+
+      document.getElementById('nuance-index').textContent = nuanceState.index + 1;
+      document.getElementById('nuance-total').textContent = nuanceQuestions.length;
+      document.getElementById('nuance-topic').textContent = `比較：${q.topic}`;
+      document.getElementById('nuance-jp').textContent = q.jp;
+      document.getElementById('nuance-zh').textContent = q.zh;
+
+      const optsEl = document.getElementById('nuance-options');
+      const fbEl = document.getElementById('nuance-feedback');
+
+      optsEl.innerHTML = q.options
+        .map((opt, idx) => {
+          let cls = 'bg-white hover:bg-indigo-50 border-stone-300 text-slate-800 hover:border-indigo-400';
+          if (nuanceState.selectedOpt !== null) {
+            if (idx === q.correct) {
+              cls = 'bg-emerald-600 border-emerald-600 text-white shadow-sm';
+            } else if (idx === nuanceState.selectedOpt) {
+              cls = 'bg-rose-100 border-rose-400 text-rose-900';
+            } else {
+              cls = 'bg-stone-50 border-stone-200 text-slate-400';
+            }
+          }
+          return `
+            <button
+              type="button"
+              onclick="selectNuanceOption(${idx})"
+              class="p-3.5 rounded-xl border-2 text-left font-bold text-sm sm:text-base transition flex items-center gap-3 ${cls}"
+            >
+              <span class="w-6 h-6 rounded-full bg-black/10 text-xs flex items-center justify-center shrink-0">
+                ${String.fromCharCode(65 + idx)}
+              </span>
+              <span>${opt}</span>
+            </button>
+          `;
+        })
+        .join('');
+
+      if (nuanceState.selectedOpt === null) {
+        fbEl.classList.add('hidden');
+      } else {
+        const isRight = nuanceState.selectedOpt === q.correct;
+        fbEl.classList.remove('hidden');
+        fbEl.className = `rounded-xl p-4 text-sm space-y-2 border ${
+          isRight ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-rose-50 border-rose-200 text-rose-900'
+        }`;
+        fbEl.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-bold text-base">${isRight ? '✅ 回答正確！' : `❌ 正確答案是：${q.options[q.correct]}`}</span>
+            <button
+              type="button"
+              onclick="speakCurrentNuance()"
+              class="px-3 py-1 rounded-lg bg-white border border-stone-200 text-indigo-700 text-xs font-bold hover:bg-indigo-50"
+            >
+              🔊 朗讀完整句
+            </button>
+          </div>
+          <div class="text-slate-700 leading-relaxed"><strong>💡 語感解析：</strong>${q.explain}</div>
+        `;
+      }
+    }
+
+    // =========================================================================
+    // 12. INITIALIZE APP
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      applyFuriganaState();
+      updateCounters();
+      renderStudyCards();
+      initFlashcards();
+      resetDragDeckAndStart();
+      loadScrambleItem(0);
+      renderNuance();
+    });
+  </script>
+</body>
+</html>
